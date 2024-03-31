@@ -28,3 +28,16 @@ document.getElementById("sendButton").addEventListener("click", function (event)
     });
     event.preventDefault();
 });
+
+var color = document.getElementById("coloredButton");
+color.addEventListener("click", function (event) {
+        var user = document.getElementById("userInput").value;
+        var buttonColor = color.value;
+        var message = `${buttonColor}`;
+        console.log(buttonColor);
+
+        connection.invoke("SendMessage", user, message).catch(function (err) {
+            return console.error(err.toString());
+        });
+        event.preventDefault();
+    });
