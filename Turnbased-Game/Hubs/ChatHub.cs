@@ -8,5 +8,9 @@ namespace Turnbased_Game.Hubs
         {
             return Clients.All.SendAsync("ReceiveMessage", user, message);
         }
+        public Task ClickButton(string user, string color)
+        {
+            return Clients.All.SendAsync("ReceiveButton", user, color);
+        }
     }
 }
