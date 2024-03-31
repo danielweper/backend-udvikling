@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.SignalR;
 
-namespace Turnbased_Game.Hubs;
-
-public class ChatHub : Hub
+namespace Turnbased_Game.Hubs
 {
-    public Task SendMessage(string user, string message)
+    public class ChatHub : Hub
     {
-        return Clients.All.SendAsync("ReceiveMessage", user, message);
+        public Task SendMessage(string user, string message)
+        {
+            return Clients.All.SendAsync("ReceiveMessage", user, message);
+        }
     }
 }
