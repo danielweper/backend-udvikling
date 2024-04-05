@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Turnbased_Game.Hubs
@@ -11,6 +12,12 @@ namespace Turnbased_Game.Hubs
         public Task ClickButton(string user, string color)
         {
             return Clients.All.SendAsync("ReceiveButton", user, color);
+        }
+        public async Task SendClass(string colorName)
+        {
+            ColorRed color = new ColorRed(colorName);
+            Console.WriteLine(color);
+            await Clients.All.SendAsync("ReceiveClass","", color);
         }
     }
 }
