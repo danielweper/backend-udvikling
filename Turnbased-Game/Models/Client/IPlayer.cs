@@ -9,7 +9,7 @@ public interface IPlayer
     public void JoinLobby(int lobbyId);
     public void DisconnectLobby();
     public void SubmitTurn(string turnInfo);
-    public void SendMessage(int playerId, string message);
+    public void SendMessage(IUserMessage userMessage);
     public void RequestRoleChange(IRole role);
     public void RequestProfileUpdate(IPlayerProfile profile);
     public void IsReady();

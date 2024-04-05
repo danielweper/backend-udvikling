@@ -2,11 +2,6 @@ namespace Turnbased_Game.Models.Server;
 
 public interface ILobby
 {
-    public void Ping();
-    public void Acknowledge();
-    public void Accepted();
-    public void Denied();
-    public void InvalidRequest(string errorMessage);
     public void LobbyCreated();
     public void LobbyInfo();
     public void PlayerJoined();
@@ -20,6 +15,4 @@ public interface ILobby
     public void PlayerProfileChanged(int playerId);
     public void RoleChangeRequest(int playerId, IRole requestedRole);
     public void RoleChanged();
-    
-
 }
