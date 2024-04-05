@@ -23,6 +23,13 @@ connection.on("ReceiveButton", function (user, color) {
     li.textContent = `${user} pressed ${color}`;
 });
 
+connection.on("ReceiveClass", function(colorName) {
+    var li = document.createElement("li");
+    document.getElementById("messagesList").appendChild(li);
+    
+    li.textContent = `sent class ${colorName}`;
+});
+
 connection.start().then(function () {
     document.getElementById("sendButton").disabled = false;
 }).catch(function (err) {
@@ -51,3 +58,12 @@ color.addEventListener("click", function (event) {
         console.log("eee");
         event.preventDefault();
     });
+
+document.getElementById("sendClass").addEventListener("click", function (event) {
+    var colorName = "red";
+    connection.invoke("SendClass", colorName).catch(function (err) {
+        return console.error(err.toString());
+    });
+    console.log("sent class");
+    event.preventDefault();
+});
