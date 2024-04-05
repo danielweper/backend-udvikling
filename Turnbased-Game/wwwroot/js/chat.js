@@ -23,11 +23,11 @@ connection.on("ReceiveButton", function (user, color) {
     li.textContent = `${user} pressed ${color}`;
 });
 
-connection.on("ReceiveClass", function(colorName) {
+connection.on("ReceiveClass", (person) => {
     var li = document.createElement("li");
     document.getElementById("messagesList").appendChild(li);
     
-    li.textContent = `sent class ${colorName}`;
+    li.textContent = `sent Person with name: ${person.name} & age: ${person.age}`;
 });
 
 connection.start().then(function () {
@@ -60,10 +60,13 @@ color.addEventListener("click", function (event) {
     });
 
 document.getElementById("sendClass").addEventListener("click", function (event) {
-    var colorName = "red";
-    connection.invoke("SendClass", colorName).catch(function (err) {
+    const person = {name:"Danny", age:25};
+    
+    connection.invoke("SendClass", person).catch(function (err) {
+        console.log("didn't sent class");
         return console.error(err.toString());
     });
+
     console.log("sent class");
     event.preventDefault();
 });

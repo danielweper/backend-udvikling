@@ -13,11 +13,9 @@ namespace Turnbased_Game.Hubs
         {
             return Clients.All.SendAsync("ReceiveButton", user, color);
         }
-        public async Task SendClass(string colorName)
+        public Task SendClass(Person person)
         {
-            ColorRed color = new ColorRed(colorName);
-            Console.WriteLine(color);
-            await Clients.All.SendAsync("ReceiveClass","", color);
+            return Clients.All.SendAsync("ReceiveClass", person);
         }
     }
 }
