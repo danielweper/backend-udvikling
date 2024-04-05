@@ -1,6 +1,6 @@
-namespace DefaultNamespace;
+namespace Turnbased_Game.Models.Server;
 
-public interface Lobby
+public interface ILobby
 {
     public void LobbyCreated();
     public void LobbyInfo(int lobbyId);

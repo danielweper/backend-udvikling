@@ -1,6 +1,6 @@
-namespace DefaultNamespace;
+namespace Turnbased_Game.Models.Client;
 
-public interface Participant
+public interface IParticipant
 {
     public void CreateLobby();
     public void JoinLobby(int lobbyId);
