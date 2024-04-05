@@ -1,3 +1,5 @@
+using Turnbased_Game.Models.Server;
+
 namespace Turnbased_Game.Models.Client;
 
 public interface IPlayer

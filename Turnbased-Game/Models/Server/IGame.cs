@@ -1,4 +1,4 @@
-namespace Turnbased_Game.Models;
+namespace Turnbased_Game.Models.Server;
 
 public interface IGame
 {
