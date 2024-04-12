@@ -10,6 +10,7 @@ public interface IParticipant
     public event Func<IGameSettings> GameSettingsChanged;
     public event Func<byte, IPlayerProfile> PlayerChangedProfile;
     public event Func<byte, IRole> PlayerChangedRole;
+    public event Func BadRequest; 
 
     public void ListAvailableLobbies();
     public void JoinLobby(int lobbyId);

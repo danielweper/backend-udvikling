@@ -27,6 +27,8 @@ public class Client : IClient
     public event Func<IGameSettings>? GameSettingsChanged;
     public event Func<byte, IPlayerProfile>? PlayerChangedProfile;
     public event Func<byte, IRole>? PlayerChangedRole;
+    public event Func? BadRequest;
+
     public void ListAvailableLobbies()
     {
         throw new NotImplementedException();
