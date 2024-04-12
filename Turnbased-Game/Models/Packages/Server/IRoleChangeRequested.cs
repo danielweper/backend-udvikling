@@ -1,6 +1,6 @@
 namespace Turnbased_Game.Models.Packages.Server;
 
-public interface IRoleChangeRequested: IPackage
+public interface IRoleChangeRequested: IServerPackage
 {
     
 }

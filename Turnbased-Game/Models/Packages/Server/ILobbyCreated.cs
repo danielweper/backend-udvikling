@@ -1,6 +1,6 @@
 namespace Turnbased_Game.Models.Packages.Server;
 
-public interface ILobbyCreated: IPackage
+public interface ILobbyCreated: IServerPackage
 {
     
 }

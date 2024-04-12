@@ -1,6 +1,6 @@
 namespace Turnbased_Game.Models.Packages.Server;
 
-public interface IPlayerProfileChanged: IPackage
+public interface IPlayerProfileChanged: IServerPackage
 {
     
 }

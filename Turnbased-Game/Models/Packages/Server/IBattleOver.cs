@@ -1,6 +1,6 @@
 namespace Turnbased_Game.Models.Packages.Server;
 
-public interface IBattleOver: IPackage
+public interface IBattleOver: IServerPackage
 {
     
 }
