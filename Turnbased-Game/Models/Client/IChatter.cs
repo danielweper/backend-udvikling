@@ -1,4 +1,4 @@
-using Turnbased_Game.Models.Server;
+/*using Turnbased_Game.Models.Server;
 
 namespace Turnbased_Game.Models.Client;
 
@@ -9,4 +9,4 @@ public interface IChatter
     public event Func<byte, string> ReceivedMessage;
 
     public void SendMessage(string message);
-}
+}*/
