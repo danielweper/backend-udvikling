@@ -23,6 +23,30 @@ namespace Turnbased_Game.Models.Client
             // Assert
             Assert.Equal(packageMock.Object.id, client.LastPackageId);
         }
+
+        [Fact]
+        public void Test_SendMessage_SendMessagePacketToServerWithMessage()
+        {
+            // Arrange
+            var client = new TestClient();
+
+            IPackage? packageSent = null;
+            client.PackageSent += (IPackage package)
+            {
+                packageSent = package;
+            }
+            string payload = "Hello world!";
+            
+            // Act
+            client.SendMessage(payload);
+
+            // Assert
+            Assert.Equal(packageSent.id, 34);
+
+            ISendMessage messagePacket = (ISendMessage)packageSent;
+            Assert.Equal(messagePacket.message, payload);
+            Assert.Equal(messagePacket.senderId, client.id);
+        }
     }
 }
 

@@ -9,7 +9,12 @@ public class Client : IClient
     public event Func<byte, string>? ReceivedMessage;
     public void SendMessage(string message)
     {
-        throw new NotImplementedException();
+        ISendMessage messagePacket = new {
+            senderId = this.id,
+            message = message
+        };
+
+        SendPackage(messagePacket);
     }
 
     public event Func<bool>? BattleIsOver;
