@@ -1,38 +1,38 @@
 using Turnbased_Game.Models.Packages;
+using Turnbased_Game.Models.Packages.Client;
 
 namespace Turnbased_Game.Models.Client;
 
 public class Client : IClient
 {
-    public event Func<byte, string>? ReceivedUserMessage;
-    public event Func<string>? ReceivedSystemMessage;
-    public event Func<byte, string>? ReceivedMessage;
+    public event Action<byte, string>? ReceivedUserMessage;
+    public event Action<string>? ReceivedSystemMessage;
+    public event Action<byte, string>? ReceivedMessage;
     public void SendMessage(string message)
     {
-        ISendMessage messagePacket = new {
+        SendMessage messagePacket = new SendMessage{
             senderId = this.id,
             message = message
         };
 
         SendPackage(messagePacket);
     }
-
-    public event Func<bool>? BattleIsOver;
-    public event Func<string>? TurnIsOver;
+    public event Action? BadRequest;  
+    public event Action<bool>? BattleIsOver;
+    public event Action<string>? TurnIsOver;
     public void SubmitTurn(string turn)
     {
         throw new NotImplementedException();
     }
 
-    public event Func<string>? JoinedLobby;
-    public event Func<string>? LeftLobby;
-    public event Func<byte, IPlayerProfile>? PlayerJoined;
-    public event Func<byte>? PlayerLeft;
-    public event Func<ulong>? GameStarting;
-    public event Func<IGameSettings>? GameSettingsChanged;
-    public event Func<byte, IPlayerProfile>? PlayerChangedProfile;
-    public event Func<byte, IRole>? PlayerChangedRole;
-    public event Func? BadRequest;
+    public event Action<string>? JoinedLobby;
+    public event Action<string>? LeftLobby;
+    public event Action<byte, IPlayerProfile>? PlayerJoined;
+    public event Action<byte>? PlayerLeft;
+    public event Action<ulong>? GameStarting;
+    public event Action<IGameSettings>? GameSettingsChanged;
+    public event Action<byte, IPlayerProfile>? PlayerChangedProfile;
+    public event Action<byte, IRole>? PlayerChangedRole;
 
     public void ListAvailableLobbies()
     {
@@ -74,7 +74,7 @@ public class Client : IClient
         throw new NotImplementedException();
     }
 
-    public event Func<byte, IRole>? RoleChangeRequested;
+    public event Action<byte, IRole>? RoleChangeRequested;
     public void CreateLobby()
     {
         throw new NotImplementedException();
@@ -115,14 +115,14 @@ public class Client : IClient
         throw new NotImplementedException();
     }
 
-    public async void SendPackage(IPackage package)
+    public virtual async void SendPackage(IPackage package)
     {
-        Console.WriteLine(package.Package);
+        Console.WriteLine(package);
         // set LastPackageId to package.id
-        LastPackageId = package.id;
+        lastPackage = package;
 
     }
     public byte id { get; set; }
-    public byte LastPackageId { get; private set; }
-    public byte LobbyId { get; set; }
+    public IPackage lastPackage { get; private set; }
+    public byte lobbyId { get; set; }
 }

@@ -1,6 +1,7 @@
 using Xunit;
 using Moq;
 using Turnbased_Game.Models.Packages;
+using Turnbased_Game.Models.Packages.Client;
 
 namespace Turnbased_Game.Models.Client
 {
@@ -21,7 +22,7 @@ namespace Turnbased_Game.Models.Client
             client.SendPackage(packageMock.Object);
 
             // Assert
-            Assert.Equal(packageMock.Object.id, client.LastPackageId);
+            Assert.Equal(packageMock.Object, client.lastPackage);
         }
 
         [Fact]
@@ -31,21 +32,21 @@ namespace Turnbased_Game.Models.Client
             var client = new TestClient();
 
             IPackage? packageSent = null;
-            client.PackageSent += (IPackage package)
+            client.PackageSent += delegate(IPackage package)
             {
                 packageSent = package;
-            }
+            };
             string payload = "Hello world!";
             
             // Act
             client.SendMessage(payload);
 
             // Assert
-            Assert.Equal(packageSent.id, 34);
+            Assert.Equal(34, packageSent.id);
 
-            ISendMessage messagePacket = (ISendMessage)packageSent;
-            Assert.Equal(messagePacket.message, payload);
-            Assert.Equal(messagePacket.senderId, client.id);
+            SendMessage messagePacket = (SendMessage)packageSent;
+            Assert.Equal(payload, messagePacket.message);
+            Assert.Equal(client.id , messagePacket.senderId);
         }
     }
 }

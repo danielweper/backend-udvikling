@@ -4,8 +4,8 @@ namespace Turnbased_Game.Models.Client;
 
 public interface IFighter
 {
-    public event Func<bool> BattleIsOver;
-    public event Func<string> TurnIsOver;
+    public event Action<bool> BattleIsOver;
+    public event Action<string> TurnIsOver;
 
     public void SubmitTurn(string turn);
 }

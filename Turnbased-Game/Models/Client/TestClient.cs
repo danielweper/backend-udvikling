@@ -4,7 +4,7 @@ namespace Turnbased_Game.Models.Client;
 
 public class TestClient : Client
 {
-    public event Func<IPackage> PackageSent;
+    public event Action<IPackage> PackageSent;
 
     public override async void SendPackage(IPackage package)
     {

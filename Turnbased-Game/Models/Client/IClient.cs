@@ -5,10 +5,10 @@ namespace Turnbased_Game.Models.Client;
 public interface IClient : IChatter, IFighter, IHost
 {
     byte id { get; }
-    byte LastPackageId { get; }
+    IPackage lastPackage{ get; }
     // some state for lobby
     // some state for players in lobby
-    byte LobbyId { get; }
+    byte lobbyId { get; }
 
     public void SendPackage(IPackage package);
 }
