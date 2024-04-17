@@ -9,5 +9,6 @@ public class TestClient : Client
     public override async void SendPackage(IPackage package)
     {
         PackageSent?.Invoke(package);
+        lastPackage = package;
     }
 }

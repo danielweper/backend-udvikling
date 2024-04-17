@@ -69,11 +69,6 @@ public class Client : IClient
         throw new NotImplementedException();
     }
 
-    public void HandleBadRequest(int requestId)
-    {
-        throw new NotImplementedException();
-    }
-
     public event Action<byte, IRole>? RoleChangeRequested;
     public void CreateLobby()
     {
@@ -122,7 +117,11 @@ public class Client : IClient
         lastPackage = package;
 
     }
+    public void ReceivePackage(IPackage package)
+    {
+        throw new NotImplementedException();
+    }
     public byte id { get; set; }
-    public IPackage lastPackage { get; private set; }
+    public IPackage lastPackage { get; protected set; }
     public byte lobbyId { get; set; }
 }

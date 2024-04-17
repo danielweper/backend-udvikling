@@ -19,5 +19,4 @@ public interface IParticipant
     public void IsNotReady();
     public void RequestProfileUpdate(IPlayerProfile profile);
     public void RequestRoleChange(IRole role);
-    public void HandleBadRequest(int requestId);
 }

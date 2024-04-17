@@ -11,4 +11,5 @@ public interface IClient : IChatter, IFighter, IHost
     byte lobbyId { get; }
 
     public void SendPackage(IPackage package);
+    public void ReceivePackage(IPackage package);
 }
