@@ -1,5 +1,6 @@
 using Turnbased_Game.Models.Packages;
 using Turnbased_Game.Models.Packages.Server;
+using Turnbased_Game.Models.Packages.Shared;
 
 namespace Turnbased_Game.Models.Server;
 

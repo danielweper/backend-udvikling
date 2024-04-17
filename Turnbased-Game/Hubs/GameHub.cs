@@ -1,23 +1,23 @@
-using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.SignalR;
-using Turnbased_Game.Models.Packages;
+using Turnbased_Game.Models.Client;
+using Turnbased_Game.Models.Packages.Client;
 using Turnbased_Game.Models.Packages.Server;
-using IServer = Turnbased_Game.Models.Server.IServer;
 
 
 namespace Turnbased_Game.Hubs;
 
-public class GameHub : Hub<IServer>
+public class GameHub : Hub<IClient>
 {
-    public async Task SendMessage(string user, string message)
+    public async Task CreateLobby(ICreateLobby request)
     {
-        await Clients.All.ReceiveMessage(user, message);
+        string lobbyId = GenerateLobbyId();
+
+      
     }
 
-    public async Task SendAcknowledge(IAcknowledged acknowledgedPacket, string clientId)
+    private string GenerateLobbyId()
     {
-        await Clients.Client(clientId).Acknowledge(acknowledgedPacket);
+        // Todo
+        throw new NotImplementedException();
     }
-    
-    
 }

@@ -1,3 +1,5 @@
+using Turnbased_Game.Models.Packages.Client;
+
 namespace Turnbased_Game.Models.Client;
 
 public interface IParticipant
@@ -12,7 +14,7 @@ public interface IParticipant
     public event Func<byte, IRole> PlayerChangedRole;
 
     public void ListAvailableLobbies();
-    public void JoinLobby(int lobbyId);
+    public Task JoinLobby(IJoinLobby content);
     public void DisconnectLobby();
     public void IsReady();
     public void IsNotReady();
