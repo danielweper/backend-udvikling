@@ -77,7 +77,17 @@ public class Client : IClient
 
     public void ChangeGameSettings(string settings)
     {
-        throw new NotImplementedException();
+        ChangeGameSettings changeGameSettings = new ChangeGameSettings{
+            settings = settings,
+        };
+        if (this.id == 1)
+        {
+            SendPackage(changeGameSettings);
+        }
+        else
+        {
+            Console.WriteLine("Only host can change settings");
+        }
     }
 
     public void KickPlayer(int playerId, string reason)
