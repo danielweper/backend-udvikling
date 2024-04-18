@@ -72,6 +72,53 @@ namespace Turnbased_Game.Models.Client
             Assert.Equal(payload.settings, changeGameSettings.settings);
             
         }
+        [Fact]
+        public void Test_StartGame_SendStartGamePacketToServer()
+        {
+            // Arrange
+            var client = new TestClient();
+            client.id = 1;
+            IPackage? packageSent = null;
+            client.PackageSent += delegate(IPackage package)
+            {
+                packageSent = package;
+            };
+            
+            // Act
+            client.StartGame();
+            
+            // Assert
+            Assert.Equal(99, packageSent.id);
+        }
+        [Fact]
+        public void Test_CreateLobby_SendCreateLobbyPacketToServer_InspectServerResponse()
+        {
+            // Arrange
+            var client = new TestClient();
+            IPackage? packageSent = null;
+            IPackage? packageReceived = null;
+            client.PackageSent += delegate(IPackage package)
+            {
+                packageSent = package;
+            };
+            
+            // Act
+            client.CreateLobby();
+            var acceptedPackageMock = new Mock<IAccepted>(); // mocking until we have a concrete implementation
+            acceptedPackageMock.Setup(p => p.id).Returns(1);
+            client.PackageReceived += delegate(IPackage package)
+            {
+                packageReceived = package;
+            };
+            client.ReceivePackage(acceptedPackageMock.Object);
+            
+            // Assert
+            Assert.Equal(3, packageSent.id);
+            Assert.Equal(1, packageReceived.id);
+            Assert.IsAssignableFrom<IAccepted>(packageReceived);
+            
+        }
+
     }
 }   
 

@@ -8,6 +8,7 @@ public class Client : IClient
     public event Action<byte, string>? ReceivedUserMessage;
     public event Action<string>? ReceivedSystemMessage;
     public event Action<byte, string>? ReceivedMessage;
+    public event Action<IPackage>? ReceivedPackage; 
     public void SendMessage(string message)
     {
         SendMessage messagePacket = new SendMessage{
@@ -72,15 +73,26 @@ public class Client : IClient
     public event Action<byte, IRole>? RoleChangeRequested;
     public void CreateLobby()
     {
-        throw new NotImplementedException();
+        CreateLobby createLobby = new CreateLobby();
+        SendPackage(createLobby);
+        ReceivedPackage += (package) =>
+        {
+            if (package is IAccepted)
+            {
+                Console.WriteLine("Lobby was succesfully created");
+            }
+            else if (package is IDenied)
+            {
+                Console.WriteLine("Lobby creation faield");
+            }
+        };
     }
-
     public void ChangeGameSettings(string settings)
     {
         ChangeGameSettings changeGameSettings = new ChangeGameSettings{
             settings = settings,
         };
-        if (this.id == 1)
+        if (IsHost())
         {
             SendPackage(changeGameSettings);
         }
@@ -90,9 +102,20 @@ public class Client : IClient
         }
     }
 
-    public void KickPlayer(int playerId, string reason)
+    public void KickPlayer(byte playerId, string reason)
     {
-        throw new NotImplementedException();
+       KickPlayer kickPlayer = new KickPlayer{
+           playerId = playerId,
+           reason = reason
+       };
+       if (IsHost())
+       { 
+           SendPackage(kickPlayer);
+       }
+       else
+       { 
+           Console.WriteLine("Only host can kick players");
+       }
     }
 
     public void CreateGame()
@@ -107,7 +130,15 @@ public class Client : IClient
 
     public void StartGame()
     {
-        throw new NotImplementedException();
+        StartGame startGame = new StartGame();
+        if (IsHost())
+        {
+            SendPackage(startGame);
+        }
+        else
+        {
+            Console.WriteLine("Only host can start game");
+        }
     }
 
     public void Accepted(int requestId)
@@ -127,9 +158,14 @@ public class Client : IClient
         lastPackage = package;
 
     }
-    public void ReceivePackage(IPackage package)
+    public virtual async void ReceivePackage(IPackage package)
     {
-        throw new NotImplementedException();
+        Console.WriteLine(package);
+    }
+
+    private bool IsHost()
+    {
+        return this.id == 1;   
     }
     public byte id { get; set; }
     public IPackage lastPackage { get; protected set; }

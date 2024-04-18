@@ -6,7 +6,7 @@ public interface IHost : IParticipant
 
     public void CreateLobby();
     public void ChangeGameSettings(string settings); // JSON
-    public void KickPlayer(int playerId, string reason);
+    public void KickPlayer(byte playerId, string reason);
     public void CreateGame();
     public void DeleteGame();
     public void StartGame();
