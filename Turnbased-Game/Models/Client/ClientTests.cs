@@ -42,8 +42,8 @@ namespace Turnbased_Game.Models.Client
             client.SendMessage(payload);
 
             // Assert
+            Assert.NotNull(packageSent);
             Assert.Equal(34, packageSent.id);
-
             SendMessage messagePacket = (SendMessage)packageSent;
             Assert.Equal(payload, messagePacket.message);
             Assert.Equal(client.id , messagePacket.senderId);
@@ -64,10 +64,10 @@ namespace Turnbased_Game.Models.Client
            
             // Act 
             client.ChangeGameSettings(payload.settings);
-            
+
             // Assert
+            Assert.NotNull(packageSent);
             Assert.Equal(11, packageSent.id);
-            
             ChangeGameSettings changeGameSettings = (ChangeGameSettings)packageSent;
             Assert.Equal(payload.settings, changeGameSettings.settings);
             
@@ -86,8 +86,9 @@ namespace Turnbased_Game.Models.Client
             
             // Act
             client.StartGame();
-            
+
             // Assert
+            Assert.NotNull(packageSent);
             Assert.Equal(99, packageSent.id);
         }
         [Fact]
@@ -111,9 +112,11 @@ namespace Turnbased_Game.Models.Client
                 packageReceived = package;
             };
             client.ReceivePackage(acceptedPackageMock.Object);
-            
+
             // Assert
+            Assert.NotNull(packageSent);
             Assert.Equal(3, packageSent.id);
+            Assert.NotNull(packageReceived);
             Assert.Equal(1, packageReceived.id);
             Assert.IsAssignableFrom<IAccepted>(packageReceived);
             
