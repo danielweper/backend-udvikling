@@ -1,4 +1,4 @@
-namespace Turnbased_Game.Models.Server;
+namespace Turnbased_Game.Models.ServerClasses;
 
 public interface ILobby
 {
