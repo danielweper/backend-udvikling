@@ -122,7 +122,7 @@ namespace Turnbased_Game.Models.Client
             
         }
         [Fact]
-        public void Test_CreateGame_SendCreateGamePacketToServer()
+        public void Test_CreateGame_SendsCorrectGameName()
         {
             // Arrange
             var client = new TestClient();
@@ -139,6 +139,27 @@ namespace Turnbased_Game.Models.Client
             // Assert
             Assert.NotNull(packageSent);
             Assert.Equal(69, packageSent.id);
+            CreateGame createGame = (CreateGame)packageSent;
+            Assert.Equal(gameName, createGame.gameName);
+        }
+        [Fact]
+        public void Test_DeleteGame_SendsCorrectGameName()
+        {
+            // Arrange
+            var client = new TestClient();
+            IPackage? packageSent = null;
+            client.PackageSent += delegate(IPackage package)
+            {
+                packageSent = package;
+            };
+            string gameName = "Chess";
+            
+            // Act
+            client.CreateGame(gameName);
+
+            // Assert
+            Assert.NotNull(packageSent);
+            Assert.Equal(42, packageSent.id);
             CreateGame createGame = (CreateGame)packageSent;
             Assert.Equal(gameName, createGame.gameName);
         }
