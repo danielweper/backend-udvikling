@@ -4,5 +4,5 @@ public class RequestRoleChange : IPackage
 {
     public byte id => 30;
 
-    public PlayerRole newRole;
+    public IRole newRole;
 }
