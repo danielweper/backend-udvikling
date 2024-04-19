@@ -84,12 +84,22 @@ public class Client : IClient
 
     public void RequestProfileUpdate(IPlayerProfile profile)
     {
-        throw new NotImplementedException();
+        var packet = new RequestPlayerUpdate
+        {
+            newProfile = profile,
+        };
+
+        SendPackage(packet);
     }
 
     public void RequestRoleChange(IRole role)
     {
-        throw new NotImplementedException();
+        var packet = new RequestRoleChange
+        {
+            newRole = role,
+        };
+
+        SendPackage(packet);
     }
 
     public event Action<byte, IRole>? RoleChangeRequested;
