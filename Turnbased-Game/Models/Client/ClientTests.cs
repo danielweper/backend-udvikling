@@ -11,7 +11,7 @@ namespace Turnbased_Game.Models.Client
         public void Test_SendPackage_UpdatesTheLastPackageId()
         {
             // Arrange
-            var client = new Client();
+            var client = new TestClient();
             var packageMock = new Mock<IPackage>();
             byte packageId = 11; // Metapod
 
@@ -29,7 +29,7 @@ namespace Turnbased_Game.Models.Client
         public void Test_SubmitTurn_TurnInfoGetsThrough()
         {
             // Arrange
-            var client = new Client();
+            var client = new TestClient();
 
             IPackage? packageSent = null;
             client.PackageSent += delegate(IPackage package)
@@ -52,7 +52,7 @@ namespace Turnbased_Game.Models.Client
         public void Test_ListAvailableLobbies_PacketGetsSent()
         {
             // Arrange
-            var client = new Client();
+            var client = new TestClient();
 
             IPackage? packageSent = null;
             client.PackageSent += delegate(IPackage package)
@@ -72,7 +72,7 @@ namespace Turnbased_Game.Models.Client
         public void Test_JoinLobby_JoiningTheCorrectLobby()
         {
             // Arrange
-            var client = new Client();
+            var client = new TestClient();
 
             IPackage? packageSent = null;
             client.PackageSent += delegate(IPackage package)
@@ -95,7 +95,7 @@ namespace Turnbased_Game.Models.Client
         public void Test_DisconnectLobby_PacketGetsSent()
         {
             // Arrange
-            var client = new Client();
+            var client = new TestClient();
 
             IPackage? packageSent = null;
             client.PackageSent += delegate(IPackage package)
@@ -115,7 +115,7 @@ namespace Turnbased_Game.Models.Client
         public void Test_IsReady_PacketGetsSent()
         {
             // Arrange
-            var client = new Client();
+            var client = new TestClient();
 
             IPackage? packageSent = null;
             client.PackageSent += delegate(IPackage package)
@@ -137,7 +137,7 @@ namespace Turnbased_Game.Models.Client
         public void Test_IsNotReady_PacketGetsSent()
         {
             // Arrange
-            var client = new Client();
+            var client = new TestClient();
 
             IPackage? packageSent = null;
             client.PackageSent += delegate(IPackage package)
