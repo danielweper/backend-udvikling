@@ -16,7 +16,7 @@ public interface IParticipant
     Task ReceiveAcknowledgePacket(Acknowledged packet);
     Task ReceivePacket(IClient packet);
     public void ListAvailableLobbies();
-    public Task JoinLobby(IJoinLobby content);
+    public Task JoinLobbyRequest(IJoinLobby content);
     public void DisconnectLobby();
     public void IsReady();
     public void IsNotReady();
