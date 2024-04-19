@@ -1,5 +1,5 @@
-using Turnbased_Game.Models.Packages.Client;
-using Turnbased_Game.Models.Packages.Shared;
+using Turnbased_Game.Models.Packets.Client;
+using Turnbased_Game.Models.Packets.Shared;
 
 namespace Turnbased_Game.Models.Client;
 
@@ -39,7 +39,7 @@ public class Participant: IParticipant
         throw new NotImplementedException();
     }
 
-    public Task JoinLobbyRequest(IJoinLobby content)
+    public Task JoinLobbyRequest(LobbyInfoPacket content)
     {
         throw new NotImplementedException();
     }

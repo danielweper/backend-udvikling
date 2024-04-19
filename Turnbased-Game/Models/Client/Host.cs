@@ -1,5 +1,5 @@
-using Turnbased_Game.Models.Packages.Client;
-using Turnbased_Game.Models.Packages.Shared;
+using Turnbased_Game.Models.Packets.Client;
+using Turnbased_Game.Models.Packets.Shared;
 
 namespace Turnbased_Game.Models.Client;
 
@@ -39,12 +39,12 @@ public class Host: IHost
         throw new NotImplementedException();
     }
 
-    public Task JoinLobbyRequest(IJoinLobby content)
+    public Task JoinLobbyRequest(LobbyInfoPacket content)
     {
         throw new NotImplementedException();
     }
 
-    public Task JoinLobby(IJoinLobby content)
+    public Task JoinLobby(LobbyInfoPacket content)
     {
         throw new NotImplementedException();
     }
@@ -76,7 +76,7 @@ public class Host: IHost
 
     public event Func<byte, IRole>? RoleChangeRequested;
 
-    public Task<byte> ReceiveLobby(JoinLobbyRequest request)
+    public Task<byte> CreateLobbyPacket(CreateLobbyPacket packet)
     {
         throw new NotImplementedException();
     }

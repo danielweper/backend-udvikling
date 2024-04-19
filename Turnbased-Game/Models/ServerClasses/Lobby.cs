@@ -1,5 +1,5 @@
 using Turnbased_Game.Models.Client;
-using Turnbased_Game.Models.Packages.Server;
+using Turnbased_Game.Models.Packets.Server;
 using IHost = Turnbased_Game.Models.Client.IHost;
 
 namespace Turnbased_Game.Models.ServerClasses;

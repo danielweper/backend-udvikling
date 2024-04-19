@@ -1,8 +1,8 @@
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.SignalR;
 using Turnbased_Game.Models.Client;
-using Turnbased_Game.Models.Packages.Client;
-using Turnbased_Game.Models.Packages.Shared;
+using Turnbased_Game.Models.Packets.Client;
+using Turnbased_Game.Models.Packets.Shared;
 using Turnbased_Game.Models.ServerClasses;
 using Host = Turnbased_Game.Models.Client.Host;
 using IHost = Turnbased_Game.Models.Client.IHost;
@@ -13,9 +13,9 @@ namespace Turnbased_Game.Hubs;
 public class GameHub : Hub<IClient>
 {
     private Server Server = new();
-    private Random random = new Random();
+    private Random Random = new Random();
 
-    public async Task CreateLobby()
+    public async Task CreateLobby(int maxPlayerCount)
     {
         await SendMessage("Received CreateLobby request"); // Acknowledged
         byte lobbyId = GenerateLobbyId();
@@ -28,9 +28,13 @@ public class GameHub : Hub<IClient>
         Lobby lobby = new Lobby(Host: host, id: lobbyId);
         Server.AddLobby(lobby);
 
-
         await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
-        await SendMessageToGroup($"{Context.ConnectionId} has joined the lobby with {lobbyId}", lobbyId);
+        CreateLobbyPacket packet = new CreateLobbyPacket(lobbyId);
+        await Clients.Caller.CreateLobbyRequest(packet);
+        
+        
+        LobbyInfo lobbyInfo = new LobbyInfo(maxPlayerCount: maxPlayerCount, Id: lobbyId, Host: host, playerCount: 1);
+        await Clients.Caller.JoinLobbyRequest(new LobbyInfoPacket(lobbyInfo));
     }
 
     public async Task JoinLobby(IParticipant client, byte lobbyId)
@@ -50,7 +54,7 @@ public class GameHub : Hub<IClient>
         IParticipant participant = new Participant(caller.id);
 
         Server.AddPlayerToLobby(participant, lobbyId);
-        
+
         await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
         await SendMessageToGroup($"{Context.ConnectionId} has joined the lobby with {lobbyId}", lobbyId);
     }
@@ -58,14 +62,9 @@ public class GameHub : Hub<IClient>
 
     private byte GenerateLobbyId()
     {
-        byte lobbyId = (byte)random.Next(1, 256);
+        byte lobbyId = (byte)Random.Next(1, 256);
         return lobbyId;
     }
-    
-    
-    
-    
-    
 
 
     /*private async Task SendAcknowledged(string message)
@@ -110,5 +109,31 @@ public class GameHub : Hub<IClient>
     public Task InvalidRequest(IInvalidRequest content)
     {
         throw new NotImplementedException();
+    }
+
+    private void SendMessage(string message, MessageType type, IClient caller)
+    {
+        switch (type)
+        {
+            case MessageType.Accepted:
+                Acknowledged ackPack = new(message, DateTime.Now);
+
+
+                caller.Accepted();
+
+                Caller.Denied(3);
+        }
+    }
+
+
+    private SendMessageToGroup()
+    {
+    }
+
+    enum MessageType
+    {
+        Accepted,
+        Denied,
+        Acknowledged
     }
 }

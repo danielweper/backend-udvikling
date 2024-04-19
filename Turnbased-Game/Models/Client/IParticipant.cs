@@ -1,5 +1,5 @@
-using Turnbased_Game.Models.Packages.Client;
-using Turnbased_Game.Models.Packages.Shared;
+using Turnbased_Game.Models.Packets.Client;
+using Turnbased_Game.Models.Packets.Shared;
 
 namespace Turnbased_Game.Models.Client;
 
@@ -18,7 +18,7 @@ public interface IParticipant
     Task ReceiveAcceptedPacket(ReceiveMessagePacket packet);
     Task ReceivePacket(IClient packet);
     public void ListAvailableLobbies();
-    public Task JoinLobbyRequest(IJoinLobby content);
+    public Task JoinLobbyRequest(LobbyInfoPacket content);
     public void DisconnectLobby();
     public void IsReady();
     public void IsNotReady();

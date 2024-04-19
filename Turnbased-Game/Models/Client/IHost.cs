@@ -1,4 +1,4 @@
-using Turnbased_Game.Models.Packages.Client;
+using Turnbased_Game.Models.Packets.Client;
 
 namespace Turnbased_Game.Models.Client;
 
@@ -6,7 +6,7 @@ public interface IHost : IParticipant
 {
     public event Func<byte, IRole> RoleChangeRequested;
 
-    public Task<byte> ReceiveLobby(JoinLobbyRequest request);
+    public Task<byte> CreateLobbyRequest(CreateLobbyPacket packet);
     public void ChangeGameSettings(string settings); // JSON
     public void KickPlayer(int playerId, string reason);
     public void CreateGame();
