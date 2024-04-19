@@ -198,7 +198,7 @@ namespace Turnbased_Game.Models.Client
 
             // Assert
             Assert.NotNull(packageSent);
-            Assert.Equal(11, packageSent.id);
+            Assert.Equal(26, packageSent.id);
             ChangeGameSettings changeGameSettings = (ChangeGameSettings)packageSent;
             Assert.Equal(payload.settings, changeGameSettings.settings);
             
@@ -220,7 +220,7 @@ namespace Turnbased_Game.Models.Client
 
             // Assert
             Assert.NotNull(packageSent);
-            Assert.Equal(99, packageSent.id);
+            Assert.Equal(22, packageSent.id);
         }
         [Fact]
         public void Test_CreateLobby_SendCreateLobbyPacketToServer_InspectServerResponse()
@@ -246,7 +246,7 @@ namespace Turnbased_Game.Models.Client
 
             // Assert
             Assert.NotNull(packageSent);
-            Assert.Equal(3, packageSent.id);
+            Assert.Equal(12, packageSent.id);
             Assert.NotNull(packageReceived);
             Assert.Equal(1, packageReceived.id);
             Assert.IsAssignableFrom<IAccepted>(packageReceived);
@@ -290,7 +290,7 @@ namespace Turnbased_Game.Models.Client
 
             // Assert
             Assert.NotNull(packageSent);
-            Assert.Equal(42, packageSent.id); 
+            Assert.Equal(36, packageSent.id); 
             DeleteGame deleteGamePacket = (DeleteGame)packageSent;
             Assert.Equal(gameName, deleteGamePacket.gameName);
         }
