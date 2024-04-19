@@ -69,15 +69,11 @@ public class GameHub : Hub<IClient>
     {
         ReceiveMessagePacket receiveMessagePacket = new ReceiveMessagePacket(content: message, dateTime: DateTime.Now);
 
-        Acknowledged ackPack = new(message, DateTime.Now);
-
-        await Clients.Group($"{lobbyId}").ReceiveAcknowledgePacket(ackPack);
+        await Clients.Group($"{lobbyId}").ReceiveAcceptedPacket(receiveMessagePacket);
     }
 
     private async Task SendMessage(string message)
     {
-        ReceiveMessagePacket receiveMessagePacket = new ReceiveMessagePacket(content: message, dateTime: DateTime.Now);
-
         Acknowledged ackPack = new(message, DateTime.Now);
 
         await Clients.All.ReceiveAcknowledgePacket(ackPack);
