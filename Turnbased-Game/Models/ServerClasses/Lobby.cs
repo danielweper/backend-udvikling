@@ -3,78 +3,22 @@ using IHost = Turnbased_Game.Models.Client.IHost;
 
 namespace Turnbased_Game.Models.ServerClasses;
 
-public class Lobby : ILobby
+public class Lobby
 {
-    public IHost Host { get;}
+    public IHost Host { get; }
     public List<IParticipant> Participants;
     public List<IGame> Games;
-    
-    public Lobby(IHost Host)
+    public byte Id { get; }
+
+    public Lobby(IHost Host, byte id)
     {
         this.Host = Host;
-    }
-    public void LobbyCreated()
-    {
-        throw new NotImplementedException();
+        this.Id = id;
     }
 
-    public void LobbyInfo()
-    {
-        throw new NotImplementedException();
-    }
 
-    public void PlayerJoined()
+    public void AddPlayerToLobby(IParticipant participant)
     {
-        throw new NotImplementedException();
-    }
-
-    public void PlayerLeft(int playerId)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void PlayerInfo(int playerId)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void ListAvailableLobbies()
-    {
-        throw new NotImplementedException();
-    }
-
-    public void GameCreated()
-    {
-        throw new NotImplementedException();
-    }
-
-    public void GameDeleted()
-    {
-        throw new NotImplementedException();
-    }
-
-    public void GameStarting(int gameId)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void GameSettingsChanged(int gameId)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void PlayerProfileChanged(int playerId)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void RoleChangeRequest(int playerId, IRole requestedRole)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void RoleChanged()
-    {
-        throw new NotImplementedException();
+        Participants.Add(participant);
     }
 }
