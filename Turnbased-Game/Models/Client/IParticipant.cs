@@ -14,6 +14,7 @@ public interface IParticipant
     public event Func<byte, IPlayerProfile> PlayerChangedProfile;
     public event Func<byte, IRole> PlayerChangedRole;
     Task ReceiveAcknowledgePacket(Acknowledged packet);
+    Task ReceiveAcceptedPacket(ReceiveMessagePacket packet);
     Task ReceivePacket(IClient packet);
     public void ListAvailableLobbies();
     public Task JoinLobbyRequest(IJoinLobby content);

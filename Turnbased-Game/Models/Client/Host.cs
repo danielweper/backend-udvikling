@@ -19,8 +19,12 @@ public class Host: IHost
     {
         this.id = id;
     }
-    
     public Task ReceiveAcknowledgePacket(Acknowledged packet)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task ReceiveAcceptedPacket(ReceiveMessagePacket packet)
     {
         throw new NotImplementedException();
     }
