@@ -1,8 +1,10 @@
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.SignalR;
 using Turnbased_Game.Models.Client;
 using Turnbased_Game.Models.Packages.Client;
 using Turnbased_Game.Models.Packages.Shared;
 using Turnbased_Game.Models.ServerClasses;
+using Host = Turnbased_Game.Models.Client.Host;
 using IHost = Turnbased_Game.Models.Client.IHost;
 using ISystemMessage = Turnbased_Game.Models;
 using IUserMessage = Turnbased_Game.Models;
@@ -16,21 +18,33 @@ public class GameHub : Hub<IClient>
 
     public async Task CreateLobby()
     {
-        await SendAcknowledged("Received CreateLobby request");
-
         byte lobbyId = GenerateLobbyId();
-        CreateLobbyRequest response = new CreateLobbyRequest(lobbyId);
+
+        // Create lobby
+
+        Lobby lobby = new Lobby();
 
 
-        if (true)
-        {
-            await Clients.Caller.ReceiveLobby(response);
-        }
-        else
-        {
-            await Clients.Caller.Denied(0);
-        }
+        Server.AddLobby(lobby);
+        // Create host
+
+
+        JoinLobbyRequest response = new JoinLobbyRequest(lobbyId);
+
+        IParticipant client = new Host();
+
+        await JoinLobby(client: client, lobbyId);
     }
+
+    public async Task JoinLobby(IParticipant client, byte lobbyId)
+    {
+        // Put host in lobby
+        // Put caller in group
+
+        await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
+        await SendAcknowledgedToGroup($"{Context.ConnectionId} has joined the lobby with {lobbyId}", lobbyId);
+    }
+
 
     private byte GenerateLobbyId()
     {
@@ -38,13 +52,23 @@ public class GameHub : Hub<IClient>
         throw new NotImplementedException();
     }
 
-    public async Task SendAcknowledged(string message)
+
+    /*private async Task SendAcknowledged(string message)
     {
         ReceiveMessagePacket receiveMessagePacket = new ReceiveMessagePacket(content: message, dateTime: DateTime.Now);
 
         Acknowledged ackPack = new(message, DateTime.Now);
 
         await Clients.All.ReceiveAcknowledgePacket(ackPack);
+    }*/
+
+    private async Task SendAcknowledgedToGroup(string message, byte lobbyId)
+    {
+        ReceiveMessagePacket receiveMessagePacket = new ReceiveMessagePacket(content: message, dateTime: DateTime.Now);
+
+        Acknowledged ackPack = new(message, DateTime.Now);
+
+        await Clients.Group($"{lobbyId}").ReceiveAcknowledgePacket(ackPack);
     }
 
     public Task ReceiveMessage(string user, string message)
