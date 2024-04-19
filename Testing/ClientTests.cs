@@ -1,5 +1,5 @@
 using Moq;
-using Turnbased_Game.Models.Client;
+using ClientLogic;
 using Turnbased_Game.Models.Packets.Client;
 using Turnbased_Game.Models.Packets;
 

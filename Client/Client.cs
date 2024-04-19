@@ -1,13 +1,15 @@
+using Turnbased_Game.Models;
 using Turnbased_Game.Models.Packets;
 using Turnbased_Game.Models.Packets.Client;
 using Turnbased_Game.Models.Packets.Transport;
 
-namespace Turnbased_Game.Models.Client;
+namespace ClientLogic;
 
 public class Client : IClient
 {
     public byte id { get; protected set; }
     public byte lobbyId { get; protected set; }
+    public ClientStates currentState { get; protected set; }
     protected IPackage? lastPackage = null;
     protected PacketTransport transporter;
 
@@ -15,8 +17,14 @@ public class Client : IClient
     {
         this.transporter = transporter;
         this.transporter.PacketReceived += ReceivePackage;
+
+        OnConnected += delegate () { currentState |= ClientStates.IsConnected; };
+        JoinedLobby += delegate (string s) { currentState |= ClientStates.IsInLobby; };
+        LeftLobby += delegate (string s) { currentState &= ~ClientStates.IsInLobby; };
+        GameStarting += delegate (ulong u) { currentState |= ClientStates.IsInGame; };
     }
 
+    public event Action? OnConnected;
     public event Action<byte, string>? ReceivedUserMessage;
     public event Action<string>? ReceivedSystemMessage;
     public event Action<byte, string>? ReceivedMessage;
@@ -76,6 +84,7 @@ public class Client : IClient
     {
         var packet = new DisconnectLobby();
         SendPackage(packet);
+        currentState = currentState & ~ClientStates.IsInLobby;
     }
 
     public void IsReady()
@@ -133,6 +142,9 @@ public class Client : IClient
                 Console.WriteLine("Lobby creation faield");
             }
         };
+
+        // TODO: act on the answer as well
+        currentState = currentState | ClientStates.IsInLobby | ClientStates.IsHost;
     }
     public void ChangeGameSettings(string settings)
     {
@@ -196,6 +208,9 @@ public class Client : IClient
         {
             Console.WriteLine("Only host can start game");
         }
+
+        // TODO: act on the answer as well
+        currentState |= ClientStates.IsInGame;
     }
 
     public void Accepted(int requestId)

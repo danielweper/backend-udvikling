@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Turnbased_Game.Models.Client;
+using ClientLogic;
 using Turnbased_Game.Models.Packets;
 using Turnbased_Game.Models.Packets.Transport;
 

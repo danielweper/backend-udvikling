@@ -1,4 +1,6 @@
-namespace Turnbased_Game.Models.Client;
+using Turnbased_Game.Models;
+
+namespace ClientLogic;
 
 public interface IParticipant
 {

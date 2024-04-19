@@ -1,4 +1,4 @@
-namespace Turnbased_Game.Models.Client;
+namespace ClientLogic;
 
 public interface IChatter
 {

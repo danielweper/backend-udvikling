@@ -1,6 +1,6 @@
 using Turnbased_Game.Models.Packets;
 
-namespace Turnbased_Game.Models.Client;
+namespace ClientLogic;
 
 public interface IClient : IChatter, IFighter, IHost
 {
@@ -8,6 +8,9 @@ public interface IClient : IChatter, IFighter, IHost
     // some state for lobby
     // some state for players in lobby
     byte lobbyId { get; }
+    ClientStates currentState { get; }
+
+    event Action? OnConnected;
 
     public void SendPackage(IPackage package);
     public void ReceivePackage(IPackage package);
