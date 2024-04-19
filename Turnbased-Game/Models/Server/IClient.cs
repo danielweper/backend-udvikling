@@ -7,10 +7,11 @@ namespace Turnbased_Game.Models.Server;
 public interface IClient
 {
     public Task ReceiveAcknowledgePacket(AcknowledgedPacket packet);
-    public Task ReceiveAcceptedPacket(ReceiveMessagePacket packet);
-    public Task ReceivePacket(IClient packet);
+    Task ReceiveAcceptedPacket(AcceptedPacket packet);
+    Task ReceiveDeniedPacket(DeniedPacket packet);
+    public Task PlayerJoiningLobby(LobbyInfoPacket content);
+    public Task PlayerHasJoined(PlayerJoinedLobbyPacket content);
     public void ListAvailableLobbies();
-    public Task PlayerHasJoined(LobbyInfoPacket content);
     public void DisconnectLobby();
     public void IsReady();
     public void IsNotReady();
@@ -25,12 +26,4 @@ public interface IClient
     public void DeleteGame();
     public void StartGame();
     public Task Denied(int requestId);
-
-    Task ReceiveAcceptedPacket(AcceptedPacket packet);
-    Task ReceiveDeniedPacket(DeniedPacket packet);
-
-
-    public Task PlayerJoiningLobby(LobbyInfoPacket content);
-
-    public Task PlayerHasJoined(PlayerJoinedLobbyPacket content);
 }

@@ -1,6 +1,3 @@
-
-
-
 using Microsoft.AspNetCore.SignalR;
 using Turnbased_Game.Models.Client;
 using Turnbased_Game.Models.Packets.Client;
@@ -22,7 +19,6 @@ public class GameHub : Hub<IClient>
             Clients.Caller); // Acknowledged
 
         // Create host
-        IClient caller = Clients.Caller;
         Player host = new Player(GenerateParticipantId(null));
 
         // Create lobby
@@ -49,7 +45,7 @@ public class GameHub : Hub<IClient>
             return;
         }
 
-        IClient caller = Clients.Caller;
+
         Player player = new Player(GenerateParticipantId(lobby));
 
         lobby.AddPlayer(player);
@@ -88,17 +84,6 @@ public class GameHub : Hub<IClient>
 
         return participantId;
     }
-
-
-    /*private async Task SendAcknowledged(string message)
-    {
-        ReceiveMessagePacket receiveMessagePacket = new ReceiveMessagePacket(content: message, dateTime: DateTime.Now);
-
-        Acknowledged ackPack = new(message, DateTime.Now);
-
-        await Clients.All.ReceiveAcknowledgePacket(ackPack);
-    }*/
-
 
     public Task Accepted(AcceptedPacket content)
     {
