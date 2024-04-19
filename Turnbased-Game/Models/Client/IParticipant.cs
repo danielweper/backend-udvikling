@@ -1,11 +1,13 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using Turnbased_Game.Models.Packets.Client;
+using Turnbased_Game.Models.Packets.Server;
 using Turnbased_Game.Models.Packets.Shared;
 
 namespace Turnbased_Game.Models.Client;
 
 public interface IParticipant
 {
-    public byte id { get;}
+    public byte id { get; }
     public event Func<string> JoinedLobby;
     public event Func<byte> LeftLobby; // check
     public event Func<byte, IPlayerProfile> PlayerJoined;
@@ -14,16 +16,5 @@ public interface IParticipant
     public event Func<IGameSettings> GameSettingsChanged;
     public event Func<byte, IPlayerProfile> PlayerChangedProfile;
     public event Func<byte, IRole> PlayerChangedRole;
-    Task ReceiveAcknowledgePacket(Acknowledged packet);
-    Task ReceiveAcceptedPacket(ReceiveMessagePacket packet);
-    Task ReceivePacket(IClient packet);
-    public void ListAvailableLobbies();
-    public Task JoinLobbyRequest(LobbyInfoPacket content);
-    public void DisconnectLobby();
-    public void IsReady();
-    public void IsNotReady();
-    public void RequestProfileUpdate(IPlayerProfile profile);
-    public void RequestRoleChange(IRole role);
-
-
+    
 }

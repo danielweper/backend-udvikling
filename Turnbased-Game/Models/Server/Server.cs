@@ -1,11 +1,10 @@
 using Turnbased_Game.Models.Client;
 
-namespace Turnbased_Game.Models.ServerClasses;
+namespace Turnbased_Game.Models.Server;
 
 public class Server
 {
     private List<Lobby> _lobbies;
-
 
     public Server()
     {
@@ -21,7 +20,7 @@ public class Server
     {
         for (int i = 0; i < _lobbies.Count; i++)
         {
-            if (_lobbies[i].Id == requestId)
+            if (_lobbies[i].id == requestId)
             {
                 return _lobbies[i];
             }
@@ -30,8 +29,21 @@ public class Server
         return null;
     }
 
-    public void AddPlayerToLobby(IParticipant participant, byte lobbyId)
+    public void AddPlayerToLobby(Player participant, Lobby lobby)
     {
-        GetLobby(lobbyId).AddPlayerToLobby(participant);
+        lobby.AddPlayer(participant);
+    }
+
+    public LobbyInfo? GetLobbyInfo(byte lobbyId) => GetLobby(lobbyId)?.GetInfo();
+
+    public bool LobbyIdIsFree(byte lobbyId)
+    {
+        foreach (Lobby lobby in _lobbies)
+        {
+            // todo
+            
+        }
+
+        return true;
     }
 }
