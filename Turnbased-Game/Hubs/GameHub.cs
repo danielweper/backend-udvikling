@@ -18,32 +18,39 @@ public class GameHub : Hub<IClient>
     public async Task CreateLobby()
     {
         await SendMessage("Received CreateLobby request"); // Acknowledged
-
         byte lobbyId = GenerateLobbyId();
 
         // Create host
-        var caller = Clients.Caller;
-
+        IClient caller = Clients.Caller;
         IHost host = new Host(caller.id);
 
         // Create lobby
-        Lobby lobby = new Lobby(host);
-
+        Lobby lobby = new Lobby(Host: host, id: lobbyId);
         Server.AddLobby(lobby);
 
-        JoinLobbyRequest response = new JoinLobbyRequest(lobbyId);
 
-        //IParticipant client = new Host();
-
-
-        await JoinLobby(client: host, lobbyId);
+        await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
+        await SendMessageToGroup($"{Context.ConnectionId} has joined the lobby with {lobbyId}", lobbyId);
     }
 
     public async Task JoinLobby(IParticipant client, byte lobbyId)
     {
-        // Put IParticant in lobby
-        // Put caller in group
+        Lobby? lobby = Server.GetLobby(lobbyId);
 
+
+        if (lobby == null)
+        {
+            // No lobby found with corresponding id
+
+            return await Clients.Caller.Denied();
+        }
+
+        IClient caller = Clients.Caller;
+
+        IParticipant participant = new Participant(caller.id);
+
+        Server.AddPlayerToLobby(participant, lobbyId);
+        
         await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
         await SendMessageToGroup($"{Context.ConnectionId} has joined the lobby with {lobbyId}", lobbyId);
     }
@@ -54,6 +61,11 @@ public class GameHub : Hub<IClient>
         byte lobbyId = (byte)random.Next(1, 256);
         return lobbyId;
     }
+    
+    
+    
+    
+    
 
 
     /*private async Task SendAcknowledged(string message)
