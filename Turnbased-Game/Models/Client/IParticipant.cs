@@ -5,6 +5,7 @@ namespace Turnbased_Game.Models.Client;
 
 public interface IParticipant
 {
+    public byte id { get;}
     public event Func<string> JoinedLobby;
     public event Func<byte> LeftLobby; // check
     public event Func<byte, IPlayerProfile> PlayerJoined;
