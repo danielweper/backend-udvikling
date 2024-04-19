@@ -1,7 +1,7 @@
 using Xunit;
 using Moq;
-using Turnbased_Game.Models.Packages;
-using Turnbased_Game.Models.Packages.Client;
+using Turnbased_Game.Models.Packets;
+using Turnbased_Game.Models.Packets.Client;
 
 namespace Turnbased_Game.Models.Client
 {
