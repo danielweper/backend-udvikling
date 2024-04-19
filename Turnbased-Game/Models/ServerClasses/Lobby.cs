@@ -1,14 +1,18 @@
 using Turnbased_Game.Models.Client;
-using IHost = Microsoft.Extensions.Hosting.IHost;
+using IHost = Turnbased_Game.Models.Client.IHost;
 
 namespace Turnbased_Game.Models.ServerClasses;
 
 public class Lobby : ILobby
 {
-    public IHost Host { get; set; }
+    public IHost Host { get;}
     public List<IParticipant> Participants;
     public List<IGame> Games;
-
+    
+    public Lobby(IHost Host)
+    {
+        this.Host = Host;
+    }
     public void LobbyCreated()
     {
         throw new NotImplementedException();
