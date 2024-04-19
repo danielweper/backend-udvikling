@@ -15,25 +15,30 @@ namespace Turnbased_Game.Hubs;
 public class GameHub : Hub<IClient>
 {
     private Server Server = new();
+    private Random random = new Random();
 
     public async Task CreateLobby()
     {
         byte lobbyId = GenerateLobbyId();
 
-        // Create lobby
-
-        Lobby lobby = new Lobby();
-
-
-        Server.AddLobby(lobby);
         // Create host
+        var caller = Clients.Caller;
+        
+        IHost host = new Host(caller.id);
+        
+        // Create lobby
+        Lobby lobby = new Lobby(host);
+        
+        Server.AddLobby(lobby);
+
 
 
         JoinLobbyRequest response = new JoinLobbyRequest(lobbyId);
 
-        IParticipant client = new Host();
+        //IParticipant client = new Host();
+        
 
-        await JoinLobby(client: client, lobbyId);
+        await JoinLobby(client: host, lobbyId);
     }
 
     public async Task JoinLobby(IParticipant client, byte lobbyId)
@@ -48,8 +53,8 @@ public class GameHub : Hub<IClient>
 
     private byte GenerateLobbyId()
     {
-        // Todo
-        throw new NotImplementedException();
+        byte lobbyId = (byte)random.Next(1, 256);
+        return lobbyId;
     }
 
 
