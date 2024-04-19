@@ -1,69 +1,92 @@
-using System.Text.RegularExpressions;
+
+
+
 using Microsoft.AspNetCore.SignalR;
 using Turnbased_Game.Models.Client;
 using Turnbased_Game.Models.Packets.Client;
+using Turnbased_Game.Models.Packets.Server;
 using Turnbased_Game.Models.Packets.Shared;
-using Turnbased_Game.Models.ServerClasses;
-using Host = Turnbased_Game.Models.Client.Host;
-using IHost = Turnbased_Game.Models.Client.IHost;
-
+using Turnbased_Game.Models.Server;
+using IClient = Turnbased_Game.Models.Server.IClient;
 
 namespace Turnbased_Game.Hubs;
 
 public class GameHub : Hub<IClient>
 {
-    private Server Server = new();
-    private Random Random = new Random();
+    private Server _server = new();
+    private Random _random = new Random();
 
     public async Task CreateLobby(int maxPlayerCount)
     {
-        await SendMessage("Received CreateLobby request"); // Acknowledged
-        byte lobbyId = GenerateLobbyId();
+        await SendMessagePacket("Received CreateLobby request", MessageType.Acknowledged,
+            Clients.Caller); // Acknowledged
 
         // Create host
         IClient caller = Clients.Caller;
-        IHost host = new Host(caller.id);
+        Player host = new Player(GenerateParticipantId(null));
 
         // Create lobby
-        Lobby lobby = new Lobby(Host: host, id: lobbyId);
-        Server.AddLobby(lobby);
+        byte lobbyId = GenerateLobbyId();
+        Lobby lobby = new Lobby(lobbyId, host);
+        _server.AddLobby(lobby);
 
         await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
         CreateLobbyPacket packet = new CreateLobbyPacket(lobbyId);
-        await Clients.Caller.CreateLobbyRequest(packet);
-        
-        
-        LobbyInfo lobbyInfo = new LobbyInfo(maxPlayerCount: maxPlayerCount, Id: lobbyId, Host: host, playerCount: 1);
-        await Clients.Caller.JoinLobbyRequest(new LobbyInfoPacket(lobbyInfo));
+        await SendMessagePacket("Lobby created", MessageType.Accepted, Clients.Caller);
+
+        LobbyInfo lobbyInfo = lobby.GetInfo();
+        await Clients.Caller.PlayerJoiningLobby(new LobbyInfoPacket(lobbyInfo));
     }
 
     public async Task JoinLobby(IParticipant client, byte lobbyId)
     {
-        Lobby? lobby = Server.GetLobby(lobbyId);
-
+        Lobby? lobby = _server.GetLobby(lobbyId);
 
         if (lobby == null)
         {
-            // No lobby found with corresponding id
-
-            return await Clients.Caller.Denied();
+            await SendMessagePacket(caller: Clients.Caller, message: "No lobby found with corresponding id",
+                type: MessageType.Denied);
+            return;
         }
 
         IClient caller = Clients.Caller;
+        Player player = new Player(GenerateParticipantId(lobby));
 
-        IParticipant participant = new Participant(caller.id);
+        lobby.AddPlayer(player);
+        await SendMessagePacket(message: $"You have successfully joined lobby: {lobbyId}", type: MessageType.Accepted,
+            caller: Clients.Caller);
+        LobbyInfoPacket packet = new LobbyInfoPacket(lobby.GetInfo());
+        await Clients.Caller.PlayerJoiningLobby(packet);
 
-        Server.AddPlayerToLobby(participant, lobbyId);
-
+        // TODO: make actual player profile
+        await Clients.Group($"{lobbyId}")
+            .PlayerHasJoined(new PlayerJoinedLobbyPacket(playerId: client.id, new PlayerProfile()));
         await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
-        await SendMessageToGroup($"{Context.ConnectionId} has joined the lobby with {lobbyId}", lobbyId);
     }
 
 
     private byte GenerateLobbyId()
     {
-        byte lobbyId = (byte)Random.Next(1, 256);
+        byte lobbyId;
+        do
+        {
+            lobbyId = (byte)_random.Next(1, 256);
+        } while (!_server.LobbyIdIsFree(lobbyId));
+
         return lobbyId;
+    }
+
+    private byte GenerateParticipantId(Lobby? lobby)
+    {
+        HashSet<byte> usedIds = lobby?.players.Select(p => p.id).ToHashSet() ?? new HashSet<byte>();
+
+        byte participantId;
+        do
+        {
+            participantId = (byte)_random.Next(1, 256);
+        } while (!usedIds.Contains(participantId));
+
+        return participantId;
     }
 
 
@@ -76,32 +99,13 @@ public class GameHub : Hub<IClient>
         await Clients.All.ReceiveAcknowledgePacket(ackPack);
     }*/
 
-    private async Task SendMessageToGroup(string message, byte lobbyId)
-    {
-        ReceiveMessagePacket receiveMessagePacket = new ReceiveMessagePacket(content: message, dateTime: DateTime.Now);
 
-        await Clients.Group($"{lobbyId}").ReceiveAcceptedPacket(receiveMessagePacket);
-    }
-
-    private async Task SendMessage(string message)
-    {
-        Acknowledged ackPack = new(message, DateTime.Now);
-
-        await Clients.All.ReceiveAcknowledgePacket(ackPack);
-    }
-
-    public Task ReceiveMessage(string user, string message)
+    public Task Accepted(AcceptedPacket content)
     {
         throw new NotImplementedException();
     }
 
-
-    public Task Accepted(IAccepted content)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task Denied(IDenied content)
+    public Task Denied(DeniedPacket content)
     {
         throw new NotImplementedException();
     }
@@ -111,23 +115,55 @@ public class GameHub : Hub<IClient>
         throw new NotImplementedException();
     }
 
-    private void SendMessage(string message, MessageType type, IClient caller)
+    private async Task SendMessagePacket(string message, MessageType type, IClient caller)
     {
         switch (type)
         {
+            case MessageType.Acknowledged:
+            {
+                AcknowledgedPacket ackPack = new(message, DateTime.Now);
+                await caller.ReceiveAcknowledgePacket(ackPack);
+                break;
+            }
             case MessageType.Accepted:
-                Acknowledged ackPack = new(message, DateTime.Now);
-
-
-                caller.Accepted();
-
-                Caller.Denied(3);
+            {
+                AcceptedPacket accPack = new(message, DateTime.Now);
+                await caller.ReceiveAcceptedPacket(accPack);
+                break;
+            }
+            case MessageType.Denied:
+            {
+                DeniedPacket deniedPacket = new(message, DateTime.Now);
+                await caller.ReceiveDeniedPacket(deniedPacket);
+                break;
+            }
         }
     }
 
 
-    private SendMessageToGroup()
+    private async Task SendMessageToGroup(string message, MessageType type, int lobbyId)
     {
+        switch (type)
+        {
+            case MessageType.Acknowledged:
+            {
+                AcknowledgedPacket ackPack = new(message, DateTime.Now);
+                await Clients.Group($"{lobbyId}").ReceiveAcknowledgePacket(ackPack);
+                break;
+            }
+            case MessageType.Accepted:
+            {
+                AcceptedPacket accPack = new(message, DateTime.Now);
+                await Clients.Group($"{lobbyId}").ReceiveAcceptedPacket(accPack);
+                break;
+            }
+            case MessageType.Denied:
+            {
+                DeniedPacket deniedPacket = new(message, DateTime.Now);
+                await Clients.Group($"{lobbyId}").ReceiveDeniedPacket(deniedPacket);
+                break;
+            }
+        }
     }
 
     enum MessageType
