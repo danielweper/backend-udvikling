@@ -155,13 +155,13 @@ namespace Turnbased_Game.Models.Client
             string gameName = "Chess";
             
             // Act
-            client.CreateGame(gameName);
+            client.DeleteGame(gameName);
 
             // Assert
             Assert.NotNull(packageSent);
-            Assert.Equal(42, packageSent.id);
-            CreateGame createGame = (CreateGame)packageSent;
-            Assert.Equal(gameName, createGame.gameName);
+            Assert.Equal(42, packageSent.id); 
+            DeleteGame deleteGamePacket = (DeleteGame)packageSent;
+            Assert.Equal(gameName, deleteGamePacket.gameName);
         }
 
     }
