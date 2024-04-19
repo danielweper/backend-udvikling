@@ -5,7 +5,9 @@ VisualStudioVersion = 17.9.34728.123
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Turnbased-Game", "Turnbased-Game.csproj", "{4CC1BD00-DAA9-4CF6-8FFE-DA9E532EE95A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Testing", "..\Testing\Testing.csproj", "{AC3B6B65-6951-440B-9FBC-9B5109F6A1BF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Testing", "..\Testing\Testing.csproj", "{AC3B6B65-6951-440B-9FBC-9B5109F6A1BF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client", "..\Client\Client.csproj", "{5996C971-77F2-4B67-9A2D-B99C91DC0824}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{AC3B6B65-6951-440B-9FBC-9B5109F6A1BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AC3B6B65-6951-440B-9FBC-9B5109F6A1BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AC3B6B65-6951-440B-9FBC-9B5109F6A1BF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5996C971-77F2-4B67-9A2D-B99C91DC0824}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5996C971-77F2-4B67-9A2D-B99C91DC0824}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5996C971-77F2-4B67-9A2D-B99C91DC0824}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5996C971-77F2-4B67-9A2D-B99C91DC0824}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
