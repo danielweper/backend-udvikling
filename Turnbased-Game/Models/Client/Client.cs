@@ -1,14 +1,41 @@
 using Turnbased_Game.Models.Packets;
 using Turnbased_Game.Models.Packets.Client;
+using Turnbased_Game.Models.Packets.Transport;
 
 namespace Turnbased_Game.Models.Client;
 
 public class Client : IClient
 {
+    public byte id { get; protected set; }
+    public byte lobbyId { get; protected set; }
+    protected IPackage? lastPackage = null;
+    protected PacketTransport transporter;
+
+    public Client(PacketTransport transporter)
+    {
+        this.transporter = transporter;
+        this.transporter.PacketReceived += ReceivePackage;
+    }
+
     public event Action<byte, string>? ReceivedUserMessage;
     public event Action<string>? ReceivedSystemMessage;
     public event Action<byte, string>? ReceivedMessage;
-    public event Action<IPackage>? ReceivedPackage; 
+    public event Action<IPackage>? ReceivedPackage;
+    public event Action? BadRequest;
+    public event Action<bool>? BattleIsOver;
+    public event Action<string>? TurnIsOver;
+    public event Action<string>? JoinedLobby;
+    public event Action<string>? LeftLobby;
+    public event Action<byte, IPlayerProfile>? PlayerJoined;
+    public event Action<byte>? PlayerLeft;
+    public event Action<ulong>? GameStarting;
+    public event Action<IGameSettings>? GameSettingsChanged;
+    public event Action<byte, IPlayerProfile>? PlayerChangedProfile;
+    public event Action<byte, IRole>? PlayerChangedRole;
+    public event Action<byte, IRole>? RoleChangeRequested;
+
+    public bool isHost => (this.id == 1);
+
     public void SendMessage(string message)
     {
         SendMessage messagePacket = new SendMessage{
@@ -18,9 +45,7 @@ public class Client : IClient
 
         SendPackage(messagePacket);
     }
-    public event Action? BadRequest;  
-    public event Action<bool>? BattleIsOver;
-    public event Action<string>? TurnIsOver;
+
     public void SubmitTurn(string turn)
     {
         var packet = new SubmitTurn
@@ -30,15 +55,6 @@ public class Client : IClient
 
         SendPackage(packet);
     }
-
-    public event Action<string>? JoinedLobby;
-    public event Action<string>? LeftLobby;
-    public event Action<byte, IPlayerProfile>? PlayerJoined;
-    public event Action<byte>? PlayerLeft;
-    public event Action<ulong>? GameStarting;
-    public event Action<IGameSettings>? GameSettingsChanged;
-    public event Action<byte, IPlayerProfile>? PlayerChangedProfile;
-    public event Action<byte, IRole>? PlayerChangedRole;
 
     public void ListAvailableLobbies()
     {
@@ -102,7 +118,6 @@ public class Client : IClient
         SendPackage(packet);
     }
 
-    public event Action<byte, IRole>? RoleChangeRequested;
     public void CreateLobby()
     {
         CreateLobby createLobby = new CreateLobby();
@@ -125,7 +140,7 @@ public class Client : IClient
         {
             settings = settings,
         };
-        if (IsHost())
+        if (this.isHost)
         {
             SendPackage(changeGameSettings);
         }
@@ -142,7 +157,7 @@ public class Client : IClient
            playerId = playerId,
            reason = reason
        };
-       if (IsHost())
+       if (this.isHost)
        { 
            SendPackage(kickPlayer);
        }
@@ -173,7 +188,7 @@ public class Client : IClient
     public void StartGame()
     {
         StartGame startGame = new StartGame();
-        if (IsHost())
+        if (this.isHost)
         {
             SendPackage(startGame);
         }
@@ -195,7 +210,7 @@ public class Client : IClient
 
     public virtual async void SendPackage(IPackage package)
     {
-        Console.WriteLine(package);
+        transporter.SendPacket(package);
         // set LastPackageId to package.id
         lastPackage = package;
 
@@ -204,12 +219,4 @@ public class Client : IClient
     {
         Console.WriteLine(package);
     }
-
-    private bool IsHost()
-    {
-        return this.id == 1;   
-    }
-    public byte id { get; set; }
-    public IPackage lastPackage { get; protected set; }
-    public byte lobbyId { get; set; }
 }
