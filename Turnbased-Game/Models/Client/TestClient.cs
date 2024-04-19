@@ -1,4 +1,4 @@
-using Turnbased_Game.Models.Packages;
+using Turnbased_Game.Models.Packets;
 
 namespace Turnbased_Game.Models.Client;
 
