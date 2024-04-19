@@ -26,6 +26,136 @@ namespace Turnbased_Game.Models.Client
         }
 
         [Fact]
+        public void Test_SubmitTurn_TurnInfoGetsThrough()
+        {
+            // Arrange
+            var client = new Client();
+
+            IPackage? packageSent = null;
+            client.PackageSent += delegate(IPackage package)
+            {
+                packageSent = package;
+            };
+            string payload = "turn: 1";
+            
+            // Act
+            client.SubmitTurn(payload);
+
+            // Assert
+            Assert.NotNull(packageSent);
+            Assert.Equal(32, packageSent.id);
+            SubmitTurn submitTurnPacket = (SubmitTurn)packageSent;
+            Assert.Equal(payload, submitTurnPacket.turnInfo);
+        }
+
+        [Fact]
+        public void Test_ListAvailableLobbies_PacketGetsSent()
+        {
+            // Arrange
+            var client = new Client();
+
+            IPackage? packageSent = null;
+            client.PackageSent += delegate(IPackage package)
+            {
+                packageSent = package;
+            };
+            
+            // Act
+            client.ListAvailableLobbies();
+
+            // Assert
+            Assert.NotNull(packageSent);
+            Assert.Equal(16, packageSent.id);
+        }
+
+        [Fact]
+        public void Test_JoinLobby_JoiningTheCorrectLobby()
+        {
+            // Arrange
+            var client = new Client();
+
+            IPackage? packageSent = null;
+            client.PackageSent += delegate(IPackage package)
+            {
+                packageSent = package;
+            };
+            byte lobbyId = 42;
+            
+            // Act
+            client.JoinLobby(lobbyId);
+
+            // Assert
+            Assert.NotNull(packageSent);
+            Assert.Equal(14, packageSent.id);
+            JoinLobby readyPacket = (JoinLobby)packageSent;
+            Assert.Equal(lobbyId, readyPacket.lobbyId);
+        }
+
+        [Fact]
+        public void Test_DisconnectLobby_PacketGetsSent()
+        {
+            // Arrange
+            var client = new Client();
+
+            IPackage? packageSent = null;
+            client.PackageSent += delegate(IPackage package)
+            {
+                packageSent = package;
+            };
+            
+            // Act
+            client.ListAvailableLobbies();
+
+            // Assert
+            Assert.NotNull(packageSent);
+            Assert.Equal(18, packageSent.id);
+        }
+
+        [Fact]
+        public void Test_IsReady_PacketGetsSent()
+        {
+            // Arrange
+            var client = new Client();
+
+            IPackage? packageSent = null;
+            client.PackageSent += delegate(IPackage package)
+            {
+                packageSent = package;
+            };
+            
+            // Act
+            client.IsReady();
+
+            // Assert
+            Assert.NotNull(packageSent);
+            Assert.Equal(24, packageSent.id);
+            ToggleReadyToStart readyPacket = (ToggleReadyToStart)packageSent;
+            Assert.True(readyPacket.newStatus);
+        }
+
+        [Fact]
+        public void Test_IsNotReady_PacketGetsSent()
+        {
+            // Arrange
+            var client = new Client();
+
+            IPackage? packageSent = null;
+            client.PackageSent += delegate(IPackage package)
+            {
+                packageSent = package;
+            };
+            
+            // Act
+            client.IsNotReady();
+
+            // Assert
+            Assert.NotNull(packageSent);
+            Assert.Equal(24, packageSent.id);
+            ToggleReadyToStart readyPacket = (ToggleReadyToStart)packageSent;
+            Assert.False(readyPacket.newStatus);
+        }
+
+        [Fact]
         public void Test_SendMessage_SendMessagePacketToServerWithMessage()
         {
             // Arrange
@@ -48,6 +178,7 @@ namespace Turnbased_Game.Models.Client
             Assert.Equal(payload, messagePacket.message);
             Assert.Equal(client.id , messagePacket.senderId);
         }
+
         [Fact]
         public void Test_ChangeGameSettings_SendPacketToServerWithSettings()
         {
