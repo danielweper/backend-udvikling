@@ -121,6 +121,27 @@ namespace Turnbased_Game.Models.Client
             Assert.IsAssignableFrom<IAccepted>(packageReceived);
             
         }
+        [Fact]
+        public void Test_CreateGame_SendCreateGamePacketToServer()
+        {
+            // Arrange
+            var client = new TestClient();
+            IPackage? packageSent = null;
+            client.PackageSent += delegate(IPackage package)
+            {
+                packageSent = package;
+            };
+            string gameName = "Chess";
+            
+            // Act
+            client.CreateGame(gameName);
+
+            // Assert
+            Assert.NotNull(packageSent);
+            Assert.Equal(69, packageSent.id);
+            CreateGame createGame = (CreateGame)packageSent;
+            Assert.Equal(gameName, createGame.gameName);
+        }
 
     }
 }   

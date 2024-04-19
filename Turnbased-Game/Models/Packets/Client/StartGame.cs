@@ -1,4 +1,4 @@
-namespace Turnbased_Game.Models.Packages.Client;
+namespace Turnbased_Game.Models.Packets.Client;
 
 public class StartGame: IPackage
 {

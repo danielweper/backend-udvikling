@@ -111,7 +111,8 @@ public class Client : IClient
     }
     public void ChangeGameSettings(string settings)
     {
-        ChangeGameSettings changeGameSettings = new ChangeGameSettings{
+        ChangeGameSettings changeGameSettings = new ChangeGameSettings
+        {
             settings = settings,
         };
         if (IsHost())
@@ -126,7 +127,8 @@ public class Client : IClient
 
     public void KickPlayer(byte playerId, string reason)
     {
-       KickPlayer kickPlayer = new KickPlayer{
+       KickPlayer kickPlayer = new KickPlayer
+       {
            playerId = playerId,
            reason = reason
        };
@@ -140,14 +142,22 @@ public class Client : IClient
        }
     }
 
-    public void CreateGame()
+    public void CreateGame(string gameName)
     {
-        throw new NotImplementedException();
+        CreateGame createGame = new CreateGame
+        {
+            gameName = gameName
+        };
+        SendPackage(createGame);
     }
 
-    public void DeleteGame()
+    public void DeleteGame(string gameName)
     {
-        throw new NotImplementedException();
+        DeleteGame deleteGame = new DeleteGame
+        {
+            gameName = gameName
+        };
+        SendPackage(deleteGame);
     }
 
     public void StartGame()

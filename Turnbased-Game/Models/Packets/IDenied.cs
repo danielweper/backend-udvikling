@@ -1,4 +1,4 @@
-namespace Turnbased_Game.Models.Packages;
+namespace Turnbased_Game.Models.Packets;
 
 public interface IDenied: IPackage
 {
