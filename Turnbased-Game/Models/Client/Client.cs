@@ -23,7 +23,12 @@ public class Client : IClient
     public event Action<string>? TurnIsOver;
     public void SubmitTurn(string turn)
     {
-        throw new NotImplementedException();
+        var packet = new SubmitTurn
+        {
+            turnInfo = turn
+        };
+
+        SendPackage(packet);
     }
 
     public event Action<string>? JoinedLobby;
@@ -37,27 +42,44 @@ public class Client : IClient
 
     public void ListAvailableLobbies()
     {
-        throw new NotImplementedException();
+        var packet = new ListAvailableLobbies();
+        SendPackage(packet);
     }
 
-    public void JoinLobby(int lobbyId)
+    public void JoinLobby(byte lobbyId)
     {
-        throw new NotImplementedException();
+        var packet = new JoinLobby
+        {
+            lobbyId = lobbyId
+        };
+
+        SendPackage(packet);
     }
 
     public void DisconnectLobby()
     {
-        throw new NotImplementedException();
+        var packet = new DisconnectLobby();
+        SendPackage(packet);
     }
 
     public void IsReady()
     {
-        throw new NotImplementedException();
+        var packet = new ToggleReadyToStart
+        {
+            newStatus = true,
+        };
+
+        SendPackage(packet);
     }
 
     public void IsNotReady()
     {
-        throw new NotImplementedException();
+        var packet = new ToggleReadyToStart
+        {
+            newStatus = false,
+        };
+
+        SendPackage(packet);
     }
 
     public void RequestProfileUpdate(IPlayerProfile profile)
