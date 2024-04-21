@@ -4,7 +4,7 @@ namespace Turnbased_Game.Models.Server;
 
 public class Player(byte id)
 {
-    public byte id { get; private set; } = id;
+    public byte id { get; set; } = id;
     public PlayerRole Role { get; set; }
     public PlayerProfile Profile { get; set; }   
     
