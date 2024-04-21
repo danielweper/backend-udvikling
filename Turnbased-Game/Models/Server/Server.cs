@@ -1,10 +1,11 @@
 using Turnbased_Game.Models.Client;
+using Turnbased_Game.Models.Packets.Server;
 
 namespace Turnbased_Game.Models.Server;
 
 public class Server
 {
-    private List<Lobby> _lobbies;
+    private readonly List<Lobby> _lobbies;
 
     public Server()
     {
@@ -28,22 +29,23 @@ public class Server
 
         return null;
     }
-
-    public void AddPlayerToLobby(Player participant, Lobby lobby)
-    {
-        lobby.AddPlayer(participant);
-    }
-
     public LobbyInfo? GetLobbyInfo(byte lobbyId) => GetLobby(lobbyId)?.GetInfo();
 
     public bool LobbyIdIsFree(byte lobbyId)
     {
+        return _lobbies.All(lobby => lobby.id != lobbyId);
+    }
+    
+    public List<string> GetAvailableLobbies()
+    {
+        List<string> lobbiesInfo = new List<string>();
         foreach (Lobby lobby in _lobbies)
         {
-            // todo
-            
+            LobbyInfo lobbyInfo = lobby.GetInfo();
+            string info =
+                $"Lobby id: {lobbyInfo}, Players: {lobbyInfo.players.Length}, MaxPlayers: {lobbyInfo.maxPlayer}";
+            lobbiesInfo.Add(info);
         }
-
-        return true;
+        return lobbiesInfo;
     }
 }
