@@ -5,27 +5,28 @@ namespace Turnbased_Game.Models.Server;
 
 public class Lobby
 {
-    public readonly byte id;
+    public readonly byte Id;
     
-    public int maxPlayerCount { get; private set; }
-    public int playerCount => _players.Count;
-    public Player host => _players[0];
-    public IReadOnlyList<Player> players => _players.AsReadOnly();
+    public int MaxPlayerCount { get; private set; }
+    public int PlayerCount => _players.Count;
+    public Player Host => _players[0];
+    public IReadOnlyList<Player> Players => _players.AsReadOnly();
     private List<Player> _players;
     private List<Game> _games;
-    public LobbyVisibility visibility { get; private set; }
+    public LobbyVisibility Visibility { get; private set; }
     public Lobby(byte id, Player host, int maxPlayerCount = 10, LobbyVisibility visibility = LobbyVisibility.Public)
     {
-        this.id = id;
+        Id = id;
         _players = new List<Player>();
         _players.Add(host);
-        this.maxPlayerCount = maxPlayerCount;
-        this.visibility = visibility;
+        MaxPlayerCount = maxPlayerCount;
+        Visibility = visibility;
+        _games = new();
     }
     
     public LobbyInfo GetInfo()
     {
-        return new LobbyInfo(id, host, _players, maxPlayerCount);
+        return new LobbyInfo(Id, Host, _players, MaxPlayerCount);
     }
 
     public void AddPlayer(Player player)
@@ -44,7 +45,7 @@ public class Lobby
     }
     public void LeaveGame(Game game)
     {
-        
+        _games.Remove(game);
     }
 }
 public enum LobbyVisibility

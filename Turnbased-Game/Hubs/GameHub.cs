@@ -1,4 +1,3 @@
-using System.Dynamic;
 using Microsoft.AspNetCore.SignalR;
 using Turnbased_Game.Models.Client;
 using Turnbased_Game.Models.Packets.Client;
@@ -28,13 +27,14 @@ public class GameHub : Hub<IClient>
         _server.AddLobby(lobby);
 
         await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
+        CreateLobbyPacket packet = new CreateLobbyPacket(lobbyId);
         await SendMessagePacket("Lobby created", MessageType.Accepted, Clients.Caller);
 
         LobbyInfo lobbyInfo = lobby.GetInfo();
         await Clients.Caller.PlayerJoiningLobby(new LobbyInfoPacket(lobbyInfo));
     }
 
-    public async Task JoinLobby(byte lobbyId)
+    public async Task JoinLobby(IParticipant client, byte lobbyId)
     {
         Lobby? lobby = _server.GetLobby(lobbyId);
 
@@ -55,10 +55,10 @@ public class GameHub : Hub<IClient>
 
         // TODO: make actual player profile
         await Clients.Group($"{lobbyId}")
-            .PlayerHasJoined(new PlayerJoinedLobbyPacket(playerId: player.id, new PlayerProfile()));
+            .PlayerHasJoined(new PlayerJoinedLobbyPacket(playerId: client.id, new PlayerProfile()));
         await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
     }
-
+    
     public async Task KickPlayerFromLobby(byte playerId, string reason, byte lobbyId)
     {
         Lobby? lobby = _server.GetLobby(lobbyId);
@@ -70,7 +70,7 @@ public class GameHub : Hub<IClient>
             return;
         }
 
-        Player? player = lobby.players.FirstOrDefault(p => p.id == playerId);
+        Player? player = lobby.Players.FirstOrDefault(p => p.id == playerId);
 
         if (player != null)
         {
@@ -80,7 +80,7 @@ public class GameHub : Hub<IClient>
             await SendMessagePacket(
                 message: $"You have successfully kicked player {player.id} from this lobby: {lobbyId}",
                 type: MessageType.Accepted, caller: Clients.Caller);
-            await Clients.Group($"{lobbyId}").KickPlayer(playerId: player.id, reason: reason);
+            await Clients.Group($"{lobbyId}").KickPlayerRequest(new KickPlayerPacket(playerId: player.id, reason: reason));
         }
         else
         {
@@ -88,7 +88,6 @@ public class GameHub : Hub<IClient>
                 type: MessageType.Denied);
         }
     }
-
     public async Task LeaveLobby(byte lobbyId)
     {
         Lobby? lobby = _server.GetLobby(lobbyId);
@@ -100,17 +99,16 @@ public class GameHub : Hub<IClient>
             return;
         }
 
-        Player? player = lobby.players.FirstOrDefault(p => p.id.ToString() == Context.ConnectionId);
+        Player? player = lobby.Players.FirstOrDefault(p => p.id.ToString() == Context.ConnectionId);
 
         if (player != null)
         {
             //Remove Player
             lobby.RemovePlayer(player);
-
+            
             //send packet
             await Clients.Caller.DisconnectLobby(player.id);
-            await SendMessagePacket(message: $"You have successfully disconnected from the lobby: {lobbyId}",
-                type: MessageType.Accepted,
+            await SendMessagePacket(message: $"You have successfully disconnected from the lobby: {lobbyId}", type: MessageType.Accepted,
                 caller: Clients.Caller);
         }
         else
@@ -119,16 +117,15 @@ public class GameHub : Hub<IClient>
                 type: MessageType.Denied);
         }
     }
-
     public async Task ViewAvailableLobbies()
     {
         await SendMessagePacket("Received view AvailableLobbies", MessageType.Acknowledged,
             Clients.Caller); // Acknowledged
-
+        
         //Get all the Lobbies from server
         string[] lobbiesInfo = _server.GetAvailableLobbies().ToArray();
         AvailableLobbiesPacket availableLobbiesPacketPacket = new AvailableLobbiesPacket(lobbiesInfo);
-
+        
         //Send the packet to the client
         await Clients.Caller.ListAvailableLobbies(availableLobbiesPacketPacket);
     }
@@ -155,7 +152,7 @@ public class GameHub : Hub<IClient>
             await SendMessagePacket("The lobby doesn't exist", MessageType.Denied, Clients.Caller);
         }
     }
-
+    
     private byte GenerateLobbyId()
     {
         byte lobbyId;
@@ -169,7 +166,7 @@ public class GameHub : Hub<IClient>
 
     private byte GenerateParticipantId(Lobby? lobby)
     {
-        HashSet<byte> usedIds = lobby?.players.Select(p => p.id).ToHashSet() ?? new HashSet<byte>();
+        HashSet<byte> usedIds = lobby?.Players.Select(p => p.id).ToHashSet() ?? new HashSet<byte>();
 
         byte participantId;
         do
