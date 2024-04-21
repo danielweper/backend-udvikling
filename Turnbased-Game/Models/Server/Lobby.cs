@@ -43,6 +43,11 @@ public class Lobby
         _game = new Game(gameType);
     }
 
+    public Game? GetGame()
+    {
+        return _game;
+    }
+
     public void LeaveGame(Game game)
     {
         //TODO
