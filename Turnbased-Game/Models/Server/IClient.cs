@@ -11,8 +11,8 @@ public interface IClient
     Task ReceiveDeniedPacket(DeniedPacket packet);
     public Task PlayerJoiningLobby(LobbyInfoPacket content);
     public Task PlayerHasJoined(PlayerJoinedLobbyPacket content);
-    public void ListAvailableLobbies();
-    public void DisconnectLobby();
+    public Task ListAvailableLobbies(AvailableLobbiesPacket packet);
+    public Task DisconnectLobby(byte playerId);
     public void IsReady();
     public void IsNotReady();
     public void RequestProfileUpdate(IPlayerProfile profile);
@@ -21,8 +21,8 @@ public interface IClient
 
     public Task<byte> CreateLobbyRequest(CreateLobbyPacket packet);
     public void ChangeGameSettings(string settings); // JSON
-    public void KickPlayer(int playerId, string reason);
-    public void CreateGame();
+    public Task KickPlayer(int playerId, string reason);
+    public Task CreateGame();
     public void DeleteGame();
     public void StartGame();
     public Task Denied(int requestId);
