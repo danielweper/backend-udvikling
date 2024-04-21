@@ -1,7 +1,9 @@
 namespace Turnbased_Game.Models.Server;
 
-public class GameSettings
+public class GameSettings(GameType gameType)
 {
-    public GameType type { get; set; } 
-    public string settings { get; set; } 
+    private readonly GameType _type;
+
+    public GameType GameType { get; init; } = gameType;
+    public string settings { get; set; }
 }
