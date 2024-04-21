@@ -38,15 +38,6 @@ public class Server
     
     public List<LobbyInfo> GetAvailableLobbies()
     {
-        List<LobbyInfo> lobbyInfo = new List<LobbyInfo>();
-        foreach (Lobby lobby in _lobbies)
-        {
-            if (lobby.PlayerCount == lobby.MaxPlayerCount)
-            {
-                continue;
-            }
-            lobbyInfo.Add(lobby.GetInfo());
-        }
-        return lobbyInfo;
+        return (from lobby in _lobbies where lobby.PlayerCount != lobby.MaxPlayerCount select lobby.GetInfo()).ToList();
     }
 }
