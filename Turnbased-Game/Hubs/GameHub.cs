@@ -119,6 +119,8 @@ public class GameHub : Hub<IClient>
             }
             else
             {
+                //lobby.UpdatePlayerId();
+                    
                 //Send packet that a player left
                 await Clients.Group($"{lobbyId}").DisconnectLobby(new LeaveLobbyPacket(player.id));
             }

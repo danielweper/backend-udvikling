@@ -33,6 +33,7 @@ public class Server
 
         return null;
     }
+    
     public LobbyInfo? GetLobbyInfo(byte lobbyId) => GetLobby(lobbyId)?.GetInfo();
 
     public bool LobbyIdIsFree(byte lobbyId)

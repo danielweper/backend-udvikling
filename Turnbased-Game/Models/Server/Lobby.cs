@@ -47,10 +47,18 @@ public class Lobby
     {
         //TODO
     }
-
-    private void UpdateHost()
-    {
-    }
+    //ZIGALOW
+    // public void UpdatePlayerId()
+    // {
+    //     for (int i = 0; i < PlayerCount; i++)
+    //     {
+    //         if (_players[i] == null && _players[i+1] != null)
+    //         {
+    //             _players[i] = _players[i+1];
+    //             _players[i + 1] = null;
+    //         }
+    //     }
+    // }
 }
 
 public enum LobbyVisibility
