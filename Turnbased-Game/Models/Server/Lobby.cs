@@ -1,6 +1,3 @@
-using Turnbased_Game.Models.Client;
-using Turnbased_Game.Models.Packets.Server;
-
 namespace Turnbased_Game.Models.Server;
 
 public class Lobby
@@ -52,18 +49,18 @@ public class Lobby
     {
         //TODO
     }
-    //ZIGALOW
-    // public void UpdatePlayerId()
-    // {
-    //     for (int i = 0; i < PlayerCount; i++)
-    //     {
-    //         if (_players[i] == null && _players[i+1] != null)
-    //         {
-    //             _players[i] = _players[i+1];
-    //             _players[i + 1] = null;
-    //         }
-    //     }
-    // }
+
+    public void UpdatePlayerId()
+    {
+        _players = _players.OrderByDescending(pl => pl.id).ToList();
+
+        byte i = 0;
+        foreach (var player in _players)
+        {
+            player.id = i;
+            i++;
+        }
+    }
 }
 
 public enum LobbyVisibility
