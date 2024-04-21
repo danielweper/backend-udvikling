@@ -12,7 +12,7 @@ public interface IClient
     public Task PlayerJoiningLobby(LobbyInfoPacket content);
     public Task PlayerHasJoined(PlayerJoinedLobbyPacket content);
     public Task ListAvailableLobbies(AvailableLobbiesPacket packet);
-    public Task DisconnectLobby(byte playerId);
+    public Task DisconnectLobby(LeaveLobbyPacket leaveLobbyPacket);
     public void IsReady();
     public void IsNotReady();
     public void RequestProfileUpdate(IPlayerProfile profile);

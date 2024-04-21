@@ -100,36 +100,47 @@ public class GameHub : Hub<IClient>
                 type: MessageType.Denied);
             return;
         }
-
+        
         Player? player = lobby.Players.FirstOrDefault(p => p.id.ToString() == Context.ConnectionId);
 
         if (player != null)
         {
             //Remove Player
             lobby.RemovePlayer(player);
-
-            //send packet
-            await Clients.Caller.DisconnectLobby(player.id);
-            await SendMessagePacket(message: $"You have successfully disconnected from the lobby: {lobbyId}",
-                type: MessageType.Accepted,
+            
+            //Check if player is the last player left in lobby
+            if (lobby.PlayerCount == 0)
+            {
+                _server.RemoveLobby(lobby);
+                await SendMessagePacket(caller: Clients.Caller, message: "The lobby has been deleted",
+                    type: MessageType.Accepted);
+            }
+            else
+            {
+                //Send packet that a player left
+                await Clients.Group($"{lobbyId}").DisconnectLobby(new LeaveLobbyPacket(player.id));
+            }
+            
+            //Send packet to the player, that they have disconnect the lobby
+            await SendMessagePacket(message: $"You have successfully disconnected from the lobby: {lobbyId}", type: MessageType.Accepted,
                 caller: Clients.Caller);
         }
         else
         {
-            await SendMessagePacket(caller: Clients.Caller, message: "You are not in this lobby",
+            await SendMessagePacket(caller: Clients.Caller, message: "You are not in this lobby", 
                 type: MessageType.Denied);
         }
     }
-
     public async Task ViewAvailableLobbies()
     {
         await SendMessagePacket("Received view AvailableLobbies", MessageType.Acknowledged,
             Clients.Caller); // Acknowledged
-
+        
         //Get all the Lobbies from server
-        string[] lobbiesInfo = _server.GetAvailableLobbies().ToArray();
+        List<LobbyInfo> lobbiesInfo = _server.GetAvailableLobbies();
+        
         AvailableLobbiesPacket availableLobbiesPacketPacket = new AvailableLobbiesPacket(lobbiesInfo);
-
+        
         //Send the packet to the client
         await Clients.Caller.ListAvailableLobbies(availableLobbiesPacketPacket);
     }
