@@ -12,7 +12,7 @@ public class Lobby
     public Player Host => _players[0];
     public IReadOnlyList<Player> Players => _players.AsReadOnly();
     private List<Player> _players;
-    private List<Game> _games;
+    private Game game;
     public LobbyVisibility Visibility { get; private set; }
     public Lobby(byte id, Player host, int maxPlayerCount = 10, LobbyVisibility visibility = LobbyVisibility.Public)
     {
@@ -21,7 +21,7 @@ public class Lobby
         _players.Add(host);
         MaxPlayerCount = maxPlayerCount;
         Visibility = visibility;
-        _games = new();
+        game = new();
     }
     
     public LobbyInfo GetInfo()
@@ -39,13 +39,18 @@ public class Lobby
     }
     public void CreateGame()
     {
+        //TODO
         Game newGame = new Game();
-        _games.Add(newGame);
         
     }
     public void LeaveGame(Game game)
     {
-        _games.Remove(game);
+        //TODO
+    }
+
+    private void UpdateHost()
+    {
+        
     }
 }
 public enum LobbyVisibility
