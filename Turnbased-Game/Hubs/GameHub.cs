@@ -69,7 +69,7 @@ public class GameHub : Hub<IClient>
                 type: MessageType.Denied);
             return;
         }
-        Player? player = lobby.players.FirstOrDefault(p => p.id == playerId);
+        Player? player = lobby.Players.FirstOrDefault(p => p.id == playerId);
 
         if (player != null)
         {
@@ -98,7 +98,7 @@ public class GameHub : Hub<IClient>
             return;
         }
         
-        Player? player = lobby.players.FirstOrDefault(p => p.id.ToString() == Context.ConnectionId);
+        Player? player = lobby.Players.FirstOrDefault(p => p.id.ToString() == Context.ConnectionId);
 
         if (player != null)
         {
@@ -122,7 +122,8 @@ public class GameHub : Hub<IClient>
             Clients.Caller); // Acknowledged
         
         //Get all the Lobbies from server
-        string[] lobbiesInfo = _server.GetAvailableLobbies().ToArray();
+        List<LobbyInfo> lobbiesInfo = _server.GetAvailableLobbies();
+        
         AvailableLobbiesPacket availableLobbiesPacketPacket = new AvailableLobbiesPacket(lobbiesInfo);
         
         //Send the packet to the client
@@ -165,7 +166,7 @@ public class GameHub : Hub<IClient>
 
     private byte GenerateParticipantId(Lobby? lobby)
     {
-        HashSet<byte> usedIds = lobby?.players.Select(p => p.id).ToHashSet() ?? new HashSet<byte>();
+        HashSet<byte> usedIds = lobby?.Players.Select(p => p.id).ToHashSet() ?? new HashSet<byte>();
 
         byte participantId;
         do

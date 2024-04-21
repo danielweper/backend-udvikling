@@ -21,7 +21,7 @@ public class Server
     {
         for (int i = 0; i < _lobbies.Count; i++)
         {
-            if (_lobbies[i].id == requestId)
+            if (_lobbies[i].Id == requestId)
             {
                 return _lobbies[i];
             }
@@ -33,19 +33,20 @@ public class Server
 
     public bool LobbyIdIsFree(byte lobbyId)
     {
-        return _lobbies.All(lobby => lobby.id != lobbyId);
+        return _lobbies.All(lobby => lobby.Id != lobbyId);
     }
     
-    public List<string> GetAvailableLobbies()
+    public List<LobbyInfo> GetAvailableLobbies()
     {
-        List<string> lobbiesInfo = new List<string>();
+        List<LobbyInfo> lobbyInfo = new List<LobbyInfo>();
         foreach (Lobby lobby in _lobbies)
         {
-            LobbyInfo lobbyInfo = lobby.GetInfo();
-            string info =
-                $"Lobby id: {lobbyInfo}, Players: {lobbyInfo.players.Length}, MaxPlayers: {lobbyInfo.maxPlayer}";
-            lobbiesInfo.Add(info);
+            if (lobby.PlayerCount == lobby.MaxPlayerCount)
+            {
+                continue;
+            }
+            lobbyInfo.Add(lobby.GetInfo());
         }
-        return lobbiesInfo;
+        return lobbyInfo;
     }
 }

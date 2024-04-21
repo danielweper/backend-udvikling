@@ -2,12 +2,7 @@ using Turnbased_Game.Models.Packets.Server;
 
 namespace Turnbased_Game.Models.Server;
 
-public class AvailableLobbiesPacket: IAvailableLobbies
+public class AvailableLobbiesPacket(List<LobbyInfo> lobbyInfoList) : IAvailableLobbies
 {
-    public string[] LobbyInfo { get; set; }
-
-    public AvailableLobbiesPacket(string[] lobbyInfoList)
-    {
-        LobbyInfo = lobbyInfoList;
-    }
+    public List<LobbyInfo> LobbyInfo { get; set; } = lobbyInfoList;
 }
