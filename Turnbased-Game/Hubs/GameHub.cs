@@ -171,6 +171,26 @@ public class GameHub : Hub<IClient>
         }
     }
     
+    public async Task ChangeGameSettings(Lobby lobby, GameSettings newGameSettings)
+    {
+        // Acknowledged
+        await SendMessagePacket("Received ChangeGameSettings request", MessageType.Acknowledged, Clients.Caller);
+
+        if (lobby.GetGame() != null)
+        {
+            //Set game settings to the new settings
+            lobby.GetGame()!.settings.settings = newGameSettings.settings;
+            
+            //send packet
+            await Clients.Group("lobbyId").ChangeGameSettings(new GameSettingsChangedPacket(newGameSettings.settings));
+            await SendMessagePacket("You have successfully changed game settings", MessageType.Accepted, Clients.Caller);
+        }
+        else
+        { 
+            await SendMessagePacket("The game doesn't exist", MessageType.Denied, Clients.Caller); 
+        }
+    }
+    
 
     private byte GenerateLobbyId()
     {
@@ -195,22 +215,6 @@ public class GameHub : Hub<IClient>
 
         return participantId;
     }
-
-    public Task Accepted(AcceptedPacket content)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task Denied(DeniedPacket content)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task InvalidRequest(IInvalidRequest content)
-    {
-        throw new NotImplementedException();
-    }
-
     private async Task SendMessagePacket(string message, MessageType type, IClient caller)
     {
         switch (type)
@@ -231,6 +235,12 @@ public class GameHub : Hub<IClient>
             {
                 DeniedPacket deniedPacket = new(message, DateTime.Now);
                 await caller.ReceiveDeniedPacket(deniedPacket);
+                break;
+            }
+            case MessageType.Invalid:
+            {
+                InvalidPacket invalidPacket = new(message, DateTime.Now);
+                await caller.ReceiveInvalidPacket(invalidPacket);
                 break;
             }
         }
@@ -258,6 +268,13 @@ public class GameHub : Hub<IClient>
                 await Clients.Group($"{lobbyId}").ReceiveDeniedPacket(deniedPacket);
                 break;
             }
+            case MessageType.Invalid:
+            {
+                InvalidPacket invalidPacket = new(message, DateTime.Now);
+                await Clients.Group($"{lobbyId}").ReceiveInvalidPacket(invalidPacket);
+                break;
+            }
+
         }
     }
 
@@ -265,6 +282,7 @@ public class GameHub : Hub<IClient>
     {
         Accepted,
         Denied,
-        Acknowledged
+        Acknowledged,
+        Invalid
     }
 }

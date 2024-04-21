@@ -9,7 +9,7 @@ public interface IServer : IServerPackage
     Task Acknowledge(AcknowledgedPacket message);
     Task Accepted(AcceptedPacket content);
     Task Denied(DeniedPacket content);
-    Task InvalidRequest(IInvalidRequest content);
+    Task InvalidRequest(InvalidPacket content);
 
     Task UserMessage(IUserMessage content);
     Task SystemMessage(ISystemMessage content);

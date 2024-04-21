@@ -9,6 +9,7 @@ public interface IClient
     public Task ReceiveAcknowledgePacket(AcknowledgedPacket packet);
     Task ReceiveAcceptedPacket(AcceptedPacket packet);
     Task ReceiveDeniedPacket(DeniedPacket packet);
+    public Task ReceiveInvalidPacket(InvalidPacket packet);
     public Task PlayerJoiningLobby(LobbyInfoPacket content);
     public Task PlayerHasJoined(PlayerJoinedLobbyPacket content);
     public Task ListAvailableLobbiesRequest(AvailableLobbiesPacket packet);
@@ -20,7 +21,7 @@ public interface IClient
     public event Func<byte, IRole> RoleChangeRequested;
 
     public Task<byte> CreateLobbyRequest(CreateLobbyPacket packet);
-    public void ChangeGameSettings(string settings); // JSON
+    public Task ChangeGameSettings(GameSettingsChangedPacket packet); // JSON
     public Task KickPlayerRequest(KickPlayerPacket packet);
     public Task CreateGame();
     public void DeleteGame();
