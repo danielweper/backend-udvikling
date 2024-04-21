@@ -11,7 +11,7 @@ public interface IClient
     Task ReceiveDeniedPacket(DeniedPacket packet);
     public Task PlayerJoiningLobby(LobbyInfoPacket content);
     public Task PlayerHasJoined(PlayerJoinedLobbyPacket content);
-    public Task ListAvailableLobbies(AvailableLobbiesPacket packet);
+    public Task ListAvailableLobbiesRequest(AvailableLobbiesPacket packet);
     public Task DisconnectLobby(LeaveLobbyPacket leaveLobbyPacket);
     public void IsReady();
     public void IsNotReady();
