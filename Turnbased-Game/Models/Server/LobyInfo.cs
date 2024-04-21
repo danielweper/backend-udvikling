@@ -11,5 +11,5 @@ public struct LobbyInfo(byte id, Player host, Player[] players, int maxPlayerCou
     public byte id { get; } = id;
     public Player host { get; } = host;
     public Player[] players { get; } = players;
-    public int maxPlayerCount { get; } = maxPlayerCount;
+    public int maxPlayer { get; } = maxPlayerCount;
 }
