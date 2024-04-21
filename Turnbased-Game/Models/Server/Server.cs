@@ -16,6 +16,10 @@ public class Server
     {
         _lobbies.Add(lobby);
     }
+    public void RemoveLobby(Lobby lobby)
+    {
+        _lobbies.Remove(lobby);
+    }
 
     public Lobby? GetLobby(byte requestId)
     {
