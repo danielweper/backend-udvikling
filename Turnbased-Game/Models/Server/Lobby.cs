@@ -16,11 +16,12 @@ public class Lobby
     public LobbyVisibility Visibility { get; private set; }
     public Lobby(byte id, Player host, int maxPlayerCount = 10, LobbyVisibility visibility = LobbyVisibility.Public)
     {
-        this.Id = id;
+        Id = id;
         _players = new List<Player>();
         _players.Add(host);
-        this.MaxPlayerCount = maxPlayerCount;
-        this.Visibility = visibility;
+        MaxPlayerCount = maxPlayerCount;
+        Visibility = visibility;
+        _games = new();
     }
     
     public LobbyInfo GetInfo()
@@ -44,7 +45,7 @@ public class Lobby
     }
     public void LeaveGame(Game game)
     {
-        
+        _games.Remove(game);
     }
 }
 public enum LobbyVisibility
