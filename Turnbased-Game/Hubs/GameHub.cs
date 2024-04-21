@@ -10,6 +10,8 @@ namespace Turnbased_Game.Hubs;
 
 public class GameHub : Hub<IClient>
 {
+    private const GameType DefaultGameType = GameType.RoundRobin;
+    
     private readonly Server _server = new();
     private readonly Random _random = new();
 
@@ -147,19 +149,16 @@ public class GameHub : Hub<IClient>
         await Clients.Caller.ListAvailableLobbiesRequest(availableLobbiesPacketPacket);
     }
 
-    public async Task CreateGame(byte lobbyId)
+    public async Task CreateGame(byte lobbyId, GameType gameType = DefaultGameType)
     {
         // Acknowledged
         await SendMessagePacket("Received CreateGame request", MessageType.Acknowledged, Clients.Caller);
-
-        // Create lobby
-
 
         Lobby? lobby = _server.GetLobby(lobbyId);
 
         if (lobby != null)
         {
-            lobby.CreateGame();
+            lobby.CreateNewGame(gameType);
 
             await Clients.Group("lobbyId").CreateGame();
             await SendMessagePacket("Game created", MessageType.Accepted, Clients.Caller);
@@ -169,6 +168,7 @@ public class GameHub : Hub<IClient>
             await SendMessagePacket("The lobby doesn't exist", MessageType.Denied, Clients.Caller);
         }
     }
+    
 
     private byte GenerateLobbyId()
     {
@@ -233,7 +233,6 @@ public class GameHub : Hub<IClient>
             }
         }
     }
-
 
     private async Task SendMessageToGroup(string message, MessageType type, int lobbyId)
     {
