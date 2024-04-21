@@ -21,7 +21,7 @@ public interface IClient
 
     public Task<byte> CreateLobbyRequest(CreateLobbyPacket packet);
     public void ChangeGameSettings(string settings); // JSON
-    public Task KickPlayer(int playerId, string reason);
+    public Task KickPlayerRequest(int playerId, string reason);
     public Task CreateGame();
     public void DeleteGame();
     public void StartGame();
