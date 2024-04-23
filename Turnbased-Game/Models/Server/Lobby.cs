@@ -51,6 +51,18 @@ public class Lobby
     {
     }
 
+    public Player? Player(byte participantId)
+    {
+        foreach (var player in _players)
+        {
+            if (player.id == participantId)
+            {
+                return player;
+            }
+        }
+        return null;
+    }
+
     public void LeaveGame(Game game)
     {
         //TODO
