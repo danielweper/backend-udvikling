@@ -6,10 +6,11 @@ public class Player(byte id)
 {
     public byte id { get; set; } = id;
     public PlayerRole Role { get; set; }
-    public PlayerProfile Profile { get; set; }   
+    public PlayerProfile Profile { get; set; } 
+    public bool ReadyStatus { get; set; }
     
     public enum PlayerRole
-    {
+    { 
         Spectator,
         Fighter
     }

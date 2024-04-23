@@ -72,7 +72,7 @@ public class GameHub : Hub<IClient>
             return;
         }
 
-        Player? player = lobby.Players.FirstOrDefault(p => p.id == playerIdToKick);
+        Player? player = lobby.GetPlayer(playerIdToKick);
 
         if (player != null)
         {
@@ -105,9 +105,9 @@ public class GameHub : Hub<IClient>
                 type: MessageType.Denied);
             return;
         }
-        //the platerId isn't the same as Context.ConnectionId
-        Player? player = lobby.Players.FirstOrDefault(p => p.id == playerId);
-
+        
+        Player? player = lobby.GetPlayer(playerId);
+        
         if (player != null)
         {
             //Remove Player
@@ -177,17 +177,25 @@ public class GameHub : Hub<IClient>
     public async Task StartGame(byte lobbyId)
     {
         // Acknowledged
-        await SendMessagePacket("Received CreateGame request", MessageType.Acknowledged, Clients.Caller);
+        await SendMessagePacket("Received Start Game request", MessageType.Acknowledged, Clients.Caller);
         
         Lobby? lobby = _server.GetLobby(lobbyId);
         
         //Check of a lobby has a game
         if (lobby?.GetGame() != null)
         {
-            lobby.StartGame();
-            
-            await Clients.Group($"{lobbyId}").StartGame();
-            await SendMessagePacket("Game Started", MessageType.Accepted, Clients.Caller);
+            bool playersReady = lobby.Players.All(p => p.ReadyStatus);
+            if (playersReady)
+            {
+                lobby.StartGame();
+                
+                await Clients.Group($"{lobbyId}").StartGame(new GameStartingPacket(DateTime.Now));
+                await SendMessagePacket("Game Started", MessageType.Accepted, Clients.Caller);
+            }
+            else
+            {
+                await SendMessagePacket("All Players are not ready", MessageType.Denied, Clients.Caller);    
+            }
         }
         else
         {
@@ -195,6 +203,45 @@ public class GameHub : Hub<IClient>
         }
 
     }
+
+    public async Task ToggleIsPlayerReady(byte lobbyId, byte playerId, bool ready)
+    {
+        // Acknowledged
+        await SendMessagePacket("Received player is Ready request", MessageType.Acknowledged, Clients.Caller);
+        
+        Lobby? lobby = _server.GetLobby(lobbyId);
+
+        if (lobby == null)
+        {
+            await SendMessagePacket(caller: Clients.Caller, message: "This lobby does not exist",
+                type: MessageType.Denied);
+            return;
+        }
+        //Get player
+        Player? player = lobby.GetPlayer(playerId);
+        
+        if (player != null)
+        {
+            player.ReadyStatus = ready;
+            //Send package
+            await Clients.Group($"{lobbyId}").ToggleReadyToStart(new PlayerReadyStatusPacket(ready, playerId));
+
+            if (!ready)
+            {
+                await SendMessagePacket("You are ready to play", MessageType.Accepted, Clients.Caller); 
+            }
+            else
+            {
+                await SendMessagePacket("You are not ready to play", MessageType.Accepted, Clients.Caller);
+            }
+        }
+        else
+        { 
+            await SendMessagePacket(caller: Clients.Caller, message: "You are not in this lobby",
+                type: MessageType.Denied);
+        }
+    }
+    
     
     public async Task ChangeGameSettings(Lobby lobby, GameSettings newGameSettings)
     {

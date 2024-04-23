@@ -14,8 +14,8 @@ public interface IClient
     public Task PlayerHasJoined(PlayerJoinedLobbyPacket content);
     public Task ListAvailableLobbiesRequest(AvailableLobbiesPacket packet);
     public Task PlayerHasLeft(PlayerLeftLobbyPacket playerLeftLobbyPacket);
-    public void IsReady();
-    public void IsNotReady();
+    public Task ToggleReadyToStart(PlayerReadyStatusPacket playerReadyStatusPacket);
+    
     public void RequestProfileUpdate(IPlayerProfile profile);
     public void RequestRoleChange(IRole role);
     public event Func<byte, IRole> RoleChangeRequested;
@@ -25,5 +25,5 @@ public interface IClient
     public Task PlayerKicked(KickPlayerPacket packet);
     public Task GameCreated(GameInfoPacket packet);
     public void DeleteGame();
-    public Task StartGame();
+    public Task StartGame(GameStartingPacket packet);
 }
