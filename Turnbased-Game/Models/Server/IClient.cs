@@ -25,6 +25,5 @@ public interface IClient
     public Task PlayerKicked(KickPlayerPacket packet);
     public Task GameCreated();
     public void DeleteGame();
-    public void StartGame();
-    public Task Denied(int requestId);
+    public Task StartGame();
 }

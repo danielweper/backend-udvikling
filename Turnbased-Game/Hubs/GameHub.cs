@@ -78,7 +78,10 @@ public class GameHub : Hub<IClient>
         {
             //Remove the player from the lobby
             lobby.RemovePlayer(player);
-
+            
+            //Update the players ID
+            lobby.UpdatePlayerId();
+            
             await SendMessagePacket(
                 message: $"You have successfully kicked player {player.id} from this lobby: {lobbyId}",
                 type: MessageType.Accepted, caller: Clients.Caller);
@@ -92,7 +95,7 @@ public class GameHub : Hub<IClient>
         }
     }
 
-    public async Task LeaveLobby(byte lobbyId)
+    public async Task LeaveLobby(byte lobbyId, byte playerId)
     {
         Lobby? lobby = _server.GetLobby(lobbyId);
 
@@ -102,8 +105,8 @@ public class GameHub : Hub<IClient>
                 type: MessageType.Denied);
             return;
         }
-
-        Player? player = lobby.Players.FirstOrDefault(p => p.id.ToString() == Context.ConnectionId);
+        //the platerId isn't the same as Context.ConnectionId
+        Player? player = lobby.Players.FirstOrDefault(p => p.id == playerId);
 
         if (player != null)
         {
@@ -169,6 +172,28 @@ public class GameHub : Hub<IClient>
         {
             await SendMessagePacket("The lobby doesn't exist", MessageType.Denied, Clients.Caller);
         }
+    }
+
+    public async Task StartGame(byte lobbyId)
+    {
+        // Acknowledged
+        await SendMessagePacket("Received CreateGame request", MessageType.Acknowledged, Clients.Caller);
+        
+        Lobby? lobby = _server.GetLobby(lobbyId);
+        
+        //Check of a lobby has a game
+        if (lobby?.GetGame() != null)
+        {
+            lobby.StartGame();
+            
+            await Clients.Group($"{lobbyId}").StartGame();
+            await SendMessagePacket("Game Started", MessageType.Accepted, Clients.Caller);
+        }
+        else
+        {
+            await SendMessagePacket("The lobby doesn't exist", MessageType.Denied, Clients.Caller);
+        }
+
     }
     
     public async Task ChangeGameSettings(Lobby lobby, GameSettings newGameSettings)

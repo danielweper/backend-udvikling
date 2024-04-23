@@ -44,7 +44,11 @@ public class Lobby
     {
         return _game;
     }
-
+    
+    public void StartGame()
+    {
+        
+    }
     public void LeaveGame(Game game)
     {
         //TODO
