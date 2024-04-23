@@ -83,7 +83,7 @@ public class GameHub : Hub<IClient>
                 message: $"You have successfully kicked player {player.id} from this lobby: {lobbyId}",
                 type: MessageType.Accepted, caller: Clients.Caller);
             await Clients.Group($"{lobbyId}")
-                .KickPlayerRequest(new KickPlayerPacket(playerId: player.id, reason: reason));
+                .PlayerKicked(new KickPlayerPacket(playerId: player.id, reason: reason));
         }
         else
         {
@@ -122,7 +122,7 @@ public class GameHub : Hub<IClient>
                 lobby.UpdatePlayerId();
                     
                 //Send packet that a player left
-                await Clients.Group($"{lobbyId}").DisconnectLobby(new LeaveLobbyPacket(player.id));
+                await Clients.Group($"{lobbyId}").PlayerHasLeft(new PlayerLeftLobbyPacket(player.id));
             }
 
             //Send packet to the player, that they have disconnect the lobby
@@ -162,7 +162,7 @@ public class GameHub : Hub<IClient>
         {
             lobby.CreateNewGame(gameType);
 
-            await Clients.Group("lobbyId").CreateGame();
+            await Clients.Group("lobbyId").GameCreated();
             await SendMessagePacket("Game created", MessageType.Accepted, Clients.Caller);
         }
         else

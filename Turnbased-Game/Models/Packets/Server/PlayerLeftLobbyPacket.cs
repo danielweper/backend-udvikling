@@ -1,6 +1,6 @@
 namespace Turnbased_Game.Models.Packets.Server;
 
-public class LeaveLobbyPacket(byte id)
+public class PlayerLeftLobbyPacket(byte id)
 {
     public byte id { get; private set; } 
 }

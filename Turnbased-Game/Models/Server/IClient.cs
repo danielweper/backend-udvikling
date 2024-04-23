@@ -13,7 +13,7 @@ public interface IClient
     public Task PlayerJoiningLobby(LobbyInfoPacket content);
     public Task PlayerHasJoined(PlayerJoinedLobbyPacket content);
     public Task ListAvailableLobbiesRequest(AvailableLobbiesPacket packet);
-    public Task DisconnectLobby(LeaveLobbyPacket leaveLobbyPacket);
+    public Task PlayerHasLeft(PlayerLeftLobbyPacket playerLeftLobbyPacket);
     public void IsReady();
     public void IsNotReady();
     public void RequestProfileUpdate(IPlayerProfile profile);
@@ -22,8 +22,8 @@ public interface IClient
 
     public Task<byte> CreateLobbyRequest(CreateLobbyPacket packet);
     public Task ChangeGameSettings(GameSettingsChangedPacket packet); // JSON
-    public Task KickPlayerRequest(KickPlayerPacket packet);
-    public Task CreateGame();
+    public Task PlayerKicked(KickPlayerPacket packet);
+    public Task GameCreated();
     public void DeleteGame();
     public void StartGame();
     public Task Denied(int requestId);
