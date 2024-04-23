@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.SignalR;
 using Turnbased_Game.Models.Client;
 using Turnbased_Game.Models.Packets.Client;
@@ -22,7 +21,7 @@ public class GameHub : Hub<IClient>
             Clients.Caller); // Acknowledged
 
         // Create host
-        Player host = new Player(GenerateParticipantId(null));
+        Player host = new Player(Context.ConnectionId, GenerateParticipantId(null));
 
         // Create lobby
         byte lobbyId = GenerateLobbyId();
@@ -47,7 +46,7 @@ public class GameHub : Hub<IClient>
             return;
         }
 
-        Player player = new Player(GenerateParticipantId(lobby));
+        Player player = new Player(Context.ConnectionId, GenerateParticipantId(lobby));
 
         lobby.AddPlayer(player);
         await SendMessagePacket(message: $"You have successfully joined lobby: {lobbyId}", type: MessageType.Accepted,
@@ -57,7 +56,7 @@ public class GameHub : Hub<IClient>
 
         // TODO: make actual player profile
         await Clients.Group($"{lobbyId}")
-            .PlayerHasJoined(new PlayerJoinedLobbyPacket(playerId: player.id, new PlayerProfile()));
+            .PlayerHasJoined(new PlayerJoinedLobbyPacket(playerId: player.ParticipantId, new PlayerProfile()));
         await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
     }
 
@@ -83,10 +82,10 @@ public class GameHub : Hub<IClient>
             lobby.UpdatePlayerId();
 
             await SendMessagePacket(
-                message: $"You have successfully kicked player {player.id} from this lobby: {lobbyId}",
+                message: $"You have successfully kicked player {player.ParticipantId} from this lobby: {lobbyId}",
                 type: MessageType.Accepted, caller: Clients.Caller);
             await Clients.Group($"{lobbyId}")
-                .PlayerKicked(new KickPlayerPacket(playerId: player.id, reason: reason));
+                .PlayerKicked(new KickPlayerPacket(playerId: player.ParticipantId, reason: reason));
         }
         else
         {
@@ -125,7 +124,7 @@ public class GameHub : Hub<IClient>
                 lobby.UpdatePlayerId();
 
                 //Send packet that a player left
-                await Clients.Group($"{lobbyId}").PlayerHasLeft(new PlayerLeftLobbyPacket(player.id));
+                await Clients.Group($"{lobbyId}").PlayerHasLeft(new PlayerLeftLobbyPacket(player.ParticipantId));
             }
 
             //Send packet to the player, that they have disconnect the lobby
@@ -266,7 +265,8 @@ public class GameHub : Hub<IClient>
 
     public async Task ChangePlayerProfile(byte lobbyId, byte playerId, PlayerProfile newPlayerProfile)
     {
-        await SendMessagePacket($"Request to change player profile from playerId: {playerId}", MessageType.Acknowledged,
+        await SendMessagePacket($"Request to change player profile from playerId: {playerId}, received",
+            MessageType.Acknowledged,
             Clients.Caller);
         var lobby = _server.GetLobby(lobbyId);
 
@@ -287,12 +287,100 @@ public class GameHub : Hub<IClient>
 
         player.Profile = newPlayerProfile;
 
-        await Clients.GroupExcept($"{lobbyId}", new List<string>([Context.ConnectionId]))
+        await Clients.OthersInGroup($"{lobbyId}")
             .PlayerProfileUpdated(new PlayerProfileChangedPacket(playerId, newPlayerProfile));
-        await SendMessagePacket($"You have successfully changed your player profile. New player profile: {newPlayerProfile}", MessageType.Accepted,
+        await SendMessagePacket(
+            $"You have successfully changed your player profile. New player profile: {newPlayerProfile}",
+            MessageType.Accepted,
             Clients.Caller);
     }
 
+    public async Task RoleChaneRequest(byte playerId, byte lobbyId, PlayerRole newPlayerRole)
+    {
+        await SendMessagePacket($"Request to change role: {playerId}, received", MessageType.Acknowledged,
+            Clients.Caller);
+        var lobby = _server.GetLobby(lobbyId);
+
+
+        if (lobby == null)
+        {
+            await SendMessagePacket("The lobby doesn't exist", MessageType.Denied, Clients.Caller);
+            return;
+        }
+
+        var player = lobby.GetPlayer(playerId);
+
+        if (player == null)
+        {
+            await SendMessagePacket("The player doesn't exist in the lobby", MessageType.Denied, Clients.Caller);
+            return;
+        }
+
+
+        Player? playerHost = lobby.GetPlayer(0);
+
+        if (playerHost == null)
+        {
+            await SendMessagePacket("Can't find host in lobby", MessageType.Denied, Clients.Caller);
+            return;
+        }
+
+
+        /*await Clients.Client(playerHost.connectionId)
+            .ReceiveRoleChangeRequest(new RoleChangeRequestPacket(playerId, newPlayerRole));
+            */
+
+
+        // Chat response
+        /*// Create a TaskCompletionSource to await the client's response
+        var responseReceived = new TaskCompletionSource<bool>();
+
+        // Define a unique identifier for this request (e.g., using playerId)
+        string requestId = playerId.ToString();
+
+        // Register a response handler for this specific request
+        void HandleResponse(string responseRequestId, bool success)
+        {
+            if (responseRequestId == requestId)
+            {
+                // Unsubscribe the handler
+                ClientRoleChangeResponseReceived -= HandleResponse;
+
+                // Set the result based on the response
+                responseReceived.SetResult(success);
+            }
+        }
+
+        // Wire up the response handler to handle the client's response
+        ClientRoleChangeResponseReceived += HandleResponse;
+        
+
+        try
+        {
+            // Send role change request to the player host
+            await Clients.Client(playerHost.ConnectionId)
+                .ReceiveRoleChangeRequest(new RoleChangeRequestPacket(playerId, newPlayerRole));
+
+            // Wait for the client's response or timeout after a certain period
+            var response = await Task.WhenAny(responseReceived.Task, Task.Delay(TimeSpan.FromSeconds(10))); // Adjust timeout as needed
+
+            if (response == responseReceived.Task && response.Result)
+            {
+                // Client responded successfully
+                await SendMessagePacket("Role change request processed by host", MessageType.Acknowledged, Clients.Caller);
+            }
+            else
+            {
+                // Client response timed out or failed
+                await SendMessagePacket("Role change request failed or timed out", MessageType.Denied, Clients.Caller);
+            }
+        }
+        finally
+        {
+            // Clean up the response handler
+            ClientRoleChangeResponseReceived -= HandleResponse;
+        }*/
+    }
 
     private byte GenerateLobbyId()
     {
@@ -307,7 +395,7 @@ public class GameHub : Hub<IClient>
 
     private byte GenerateParticipantId(Lobby? lobby)
     {
-        HashSet<byte> usedIds = lobby?.Players.Select(p => p.id).ToHashSet() ?? new HashSet<byte>();
+        HashSet<byte> usedIds = lobby?.Players.Select(p => p.ParticipantId).ToHashSet() ?? new HashSet<byte>();
 
         byte participantId;
         do
