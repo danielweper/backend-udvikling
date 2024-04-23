@@ -22,7 +22,7 @@ public class Lobby
 
     public LobbyInfo GetInfo()
     {
-        return new LobbyInfo(Id, Host, _players, MaxPlayerCount);
+        return new LobbyInfo(Id, Host, _players, MaxPlayerCount, Visibility);
     }
 
     public void AddPlayer(Player player)

@@ -15,7 +15,7 @@ public class GameHub : Hub<IClient>
     private readonly Server _server = new();
     private readonly Random _random = new();
 
-    public async Task CreateLobby(int maxPlayerCount)
+    public async Task CreateLobby(int maxPlayerCount, LobbyVisibility lobbyVisibility)
     {
         await SendMessagePacket("Received CreateLobby request", MessageType.Acknowledged,
             Clients.Caller); // Acknowledged
@@ -25,7 +25,7 @@ public class GameHub : Hub<IClient>
 
         // Create lobby
         byte lobbyId = GenerateLobbyId();
-        Lobby lobby = new Lobby(lobbyId, host);
+        Lobby lobby = new Lobby(lobbyId, host, maxPlayerCount, lobbyVisibility);
         _server.AddLobby(lobby);
 
         await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
@@ -119,7 +119,7 @@ public class GameHub : Hub<IClient>
             }
             else
             {
-                //lobby.UpdatePlayerId();
+                lobby.UpdatePlayerId();
                     
                 //Send packet that a player left
                 await Clients.Group($"{lobbyId}").DisconnectLobby(new LeaveLobbyPacket(player.id));
