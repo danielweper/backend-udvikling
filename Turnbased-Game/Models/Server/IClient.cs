@@ -23,7 +23,7 @@ public interface IClient
     public Task<byte> CreateLobbyRequest(CreateLobbyPacket packet);
     public Task ChangeGameSettings(GameSettingsChangedPacket packet); // JSON
     public Task PlayerKicked(KickPlayerPacket packet);
-    public Task GameCreated();
+    public Task GameCreated(GameInfoPacket packet);
     public void DeleteGame();
     public Task StartGame();
 }

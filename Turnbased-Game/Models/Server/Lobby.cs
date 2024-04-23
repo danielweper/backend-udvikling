@@ -8,10 +8,11 @@ public class Lobby
     public Player Host => _players[0];
     public IReadOnlyList<Player> Players => _players.AsReadOnly();
     private List<Player> _players;
-    private Game _game;
+    private Game? _game;
     public LobbyVisibility Visibility { get; private set; }
 
-    public Lobby(byte id, Player host, int maxPlayerCount = 10, LobbyVisibility visibility = LobbyVisibility.Public)
+    public Lobby(byte id, Player host, int maxPlayerCount = 10,
+        LobbyVisibility visibility = LobbyVisibility.Public)
     {
         Id = id;
         _players = new List<Player>();
@@ -22,7 +23,8 @@ public class Lobby
 
     public LobbyInfo GetInfo()
     {
-        return new LobbyInfo(Id, Host, _players, MaxPlayerCount, Visibility);
+        return new LobbyInfo(Id, Host, _players.ToArray(), MaxPlayerCount, Visibility,
+            _game?.GetInfo()) /*returns null, if game is null - if not, it calls GetInfo*/;
     }
 
     public void AddPlayer(Player player)
@@ -44,11 +46,11 @@ public class Lobby
     {
         return _game;
     }
-    
+
     public void StartGame()
     {
-        
     }
+
     public void LeaveGame(Game game)
     {
         //TODO
