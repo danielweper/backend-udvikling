@@ -1,6 +1,6 @@
-using Turnbased_Game.Models.Packets.Server;
+using Turnbased_Game.Models.Server;
 
-namespace Turnbased_Game.Models.Server;
+namespace Turnbased_Game.Models.Packets.Server;
 
 public class AvailableLobbiesPacket(List<LobbyInfo> lobbyInfoList) : IAvailableLobbies
 {
