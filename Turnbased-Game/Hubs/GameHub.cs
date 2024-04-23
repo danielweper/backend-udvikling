@@ -61,7 +61,7 @@ public class GameHub : Hub<IClient>
         await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
     }
 
-    public async Task KickPlayerFromLobby(byte playerId, string reason, byte lobbyId)
+    public async Task KickPlayerFromLobby(byte playerIdToKick, string reason, byte lobbyId)
     {
         Lobby? lobby = _server.GetLobby(lobbyId);
 
@@ -72,7 +72,7 @@ public class GameHub : Hub<IClient>
             return;
         }
 
-        Player? player = lobby.Players.FirstOrDefault(p => p.id == playerId);
+        Player? player = lobby.Players.FirstOrDefault(p => p.id == playerIdToKick);
 
         if (player != null)
         {
@@ -165,7 +165,7 @@ public class GameHub : Hub<IClient>
         {
             lobby.CreateNewGame(gameType);
 
-            await Clients.Group("lobbyId").GameCreated();
+            await Clients.Group($"{lobbyId}").GameCreated(new GameInfoPacket(lobby.GetGame().GetInfo()));
             await SendMessagePacket("Game created", MessageType.Accepted, Clients.Caller);
         }
         else
