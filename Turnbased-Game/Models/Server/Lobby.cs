@@ -55,7 +55,7 @@ public class Lobby
     {
         foreach (var player in _players)
         {
-            if (player.id == participantId)
+            if (player.ParticipantId == participantId)
             {
                 return player;
             }
@@ -70,12 +70,12 @@ public class Lobby
 
     public void UpdatePlayerId()
     {
-        _players = _players.OrderByDescending(pl => pl.id).ToList();
+        _players = _players.OrderByDescending(pl => pl.ParticipantId).ToList();
 
         byte i = 0;
         foreach (var player in _players)
         {
-            player.id = i;
+            player.ParticipantId = i;
             i++;
         }
     }
