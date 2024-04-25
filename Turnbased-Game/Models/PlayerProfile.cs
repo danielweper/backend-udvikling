@@ -1,7 +1,6 @@
-using System.Drawing;
 using System.Text;
 
-namespace Turnbased_Game.Models.Client;
+namespace Turnbased_Game.Models;
 
 public class PlayerProfile(Color color, string name, string connectionId)
 {
