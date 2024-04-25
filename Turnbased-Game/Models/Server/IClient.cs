@@ -17,12 +17,10 @@ public interface IClient
 
     public Task ToggleReadyToStart(PlayerReadyStatusPacket playerReadyStatusPacket);
 
-    public Task PlayerProfileUpdated(PlayerProfileChangedPacket profile);
+    public Task PlayerProfileUpdated(PlayerProfileUpdatedInLobbyPacket profile);
 
     public Task PlayerRoleChanged(PlayerRoleChangedPacket packet);
-    public void RequestRoleChange(IRole role);
-    public event Func<byte, IRole> RoleChangeRequested;
-
+    public Task PlayerProfileCreated(PlayerProfileCreatedPacket packet);
     public Task<byte> CreateLobbyRequest(CreateLobbyPacket packet);
     public Task ChangeGameSettings(GameSettingsChangedPacket packet); // JSON
     public Task PlayerKicked(KickPlayerPacket packet);
