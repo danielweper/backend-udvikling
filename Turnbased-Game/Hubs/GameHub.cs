@@ -31,6 +31,7 @@ public class GameHub : Hub<IClient>
         await SendMessagePacket(
             $"You have successfully created a playerProfile with Color: {color.ToString()}, Name: {name}",
             MessageType.Accepted, Clients.Caller);
+        await Clients.Caller.PlayerProfileCreated(new PlayerProfileCreatedPacket(playerProfile));
     }
 
     public PlayerProfile DefaultPlayerProfile(string connectionId)
@@ -307,9 +308,9 @@ public class GameHub : Hub<IClient>
         }
     }
 
-    public async Task ChangePlayerProfile(byte lobbyId, byte playerId, PlayerProfile newPlayerProfile)
+    public async Task ChangePlayerProfileInsideLobby(byte lobbyId, byte participantId, PlayerProfile newPlayerProfile)
     {
-        await SendMessagePacket($"Request to change player profile from playerId: {playerId}, received",
+        await SendMessagePacket($"Request to change player profile from playerId: {participantId}, received",
             MessageType.Acknowledged,
             Clients.Caller);
         var lobby = _server.GetLobby(lobbyId);
@@ -321,7 +322,7 @@ public class GameHub : Hub<IClient>
             return;
         }
 
-        var player = lobby.GetPlayer(playerId);
+        var player = lobby.GetPlayer(participantId);
 
         if (player == null)
         {
@@ -332,7 +333,8 @@ public class GameHub : Hub<IClient>
         player.Profile = newPlayerProfile;
 
         await Clients.OthersInGroup($"{lobbyId}")
-            .PlayerProfileUpdated(new PlayerProfileChangedPacket(playerId, newPlayerProfile));
+            .PlayerProfileUpdated(
+                new PlayerProfileUpdatedInLobbyPacket(participantId, player.DisplayName, newPlayerProfile));
         await SendMessagePacket(
             $"You have successfully changed your player profile. New player profile: {newPlayerProfile}",
             MessageType.Accepted,
