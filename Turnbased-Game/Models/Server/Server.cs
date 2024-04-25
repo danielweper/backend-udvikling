@@ -43,6 +43,6 @@ public class Server
     
     public List<LobbyInfo> GetAvailableLobbies()
     {
-        return (from lobby in _lobbies where lobby.PlayerCount != lobby.MaxPlayerCount select lobby.GetInfo()).ToList();
+        return (from lobby in _lobbies where (lobby.PlayerCount != lobby.MaxPlayerCount && lobby.Visibility==LobbyVisibility.Public)  select lobby.GetInfo()).ToList();
     }
 }
