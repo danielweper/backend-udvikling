@@ -37,7 +37,7 @@ public class GameHub : Hub<IClient>
 
     public async Task JoinLobby(byte lobbyId)
     {
-        Lobby? lobby = _server.GetLobby(lobbyId);
+        var lobby = _server.GetLobby(lobbyId);
 
         if (lobby == null)
         {
@@ -62,7 +62,7 @@ public class GameHub : Hub<IClient>
 
     public async Task KickPlayerFromLobby(byte playerIdToKick, string reason, byte lobbyId)
     {
-        Lobby? lobby = _server.GetLobby(lobbyId);
+        var lobby = _server.GetLobby(lobbyId);
 
         if (lobby == null)
         {
@@ -71,7 +71,7 @@ public class GameHub : Hub<IClient>
             return;
         }
 
-        Player? player = lobby.GetPlayer(playerIdToKick);
+        var player = lobby.GetPlayer(playerIdToKick);
 
         if (player != null)
         {
@@ -96,7 +96,7 @@ public class GameHub : Hub<IClient>
 
     public async Task LeaveLobby(byte lobbyId, byte playerId)
     {
-        Lobby? lobby = _server.GetLobby(lobbyId);
+        var lobby = _server.GetLobby(lobbyId);
 
         if (lobby == null)
         {
@@ -105,7 +105,7 @@ public class GameHub : Hub<IClient>
             return;
         }
 
-        Player? player = lobby.GetPlayer(playerId);
+        var player = lobby.GetPlayer(playerId);
 
         if (player != null)
         {
@@ -158,13 +158,13 @@ public class GameHub : Hub<IClient>
         // Acknowledged
         await SendMessagePacket("Received CreateGame request", MessageType.Acknowledged, Clients.Caller);
 
-        Lobby? lobby = _server.GetLobby(lobbyId);
+        var lobby = _server.GetLobby(lobbyId);
+
 
         if (lobby != null)
         {
-            lobby.CreateNewGame(gameType);
-
-            await Clients.Group($"{lobbyId}").GameCreated(new GameInfoPacket(lobby.GetGame().GetInfo()));
+            Game game = lobby.CreateNewGame(gameType);
+            await Clients.Group($"{lobbyId}").GameCreated(new GameInfoPacket(game.GetInfo()));
             await SendMessagePacket("Game created", MessageType.Accepted, Clients.Caller);
         }
         else
@@ -178,7 +178,7 @@ public class GameHub : Hub<IClient>
         // Acknowledged
         await SendMessagePacket("Received Start Game request", MessageType.Acknowledged, Clients.Caller);
 
-        Lobby? lobby = _server.GetLobby(lobbyId);
+        var lobby = _server.GetLobby(lobbyId);
 
         //Check of a lobby has a game
         if (lobby?.GetGame() != null)
@@ -207,7 +207,7 @@ public class GameHub : Hub<IClient>
         // Acknowledged
         await SendMessagePacket("Received player is Ready request", MessageType.Acknowledged, Clients.Caller);
 
-        Lobby? lobby = _server.GetLobby(lobbyId);
+        var lobby = _server.GetLobby(lobbyId);
 
         if (lobby == null)
         {
@@ -217,7 +217,7 @@ public class GameHub : Hub<IClient>
         }
 
         //Get player
-        Player? player = lobby.GetPlayer(playerId);
+        var player = lobby.GetPlayer(playerId);
 
         if (player != null)
         {
@@ -353,8 +353,8 @@ public class GameHub : Hub<IClient>
         {
             case MessageType.Acknowledged:
             {
-                AcknowledgedPacket ackPack = new(message, DateTime.Now);
-                await caller.ReceiveAcknowledgePacket(ackPack);
+                AcknowledgedPacket acknowledgedPacket = new(message, DateTime.Now);
+                await caller.ReceiveAcknowledgePacket(acknowledgedPacket);
                 break;
             }
             case MessageType.Accepted:
@@ -384,8 +384,8 @@ public class GameHub : Hub<IClient>
         {
             case MessageType.Acknowledged:
             {
-                AcknowledgedPacket ackPack = new(message, DateTime.Now);
-                await Clients.Group($"{lobbyId}").ReceiveAcknowledgePacket(ackPack);
+                AcknowledgedPacket acknowledgedPacket = new(message, DateTime.Now);
+                await Clients.Group($"{lobbyId}").ReceiveAcknowledgePacket(acknowledgedPacket);
                 break;
             }
             case MessageType.Accepted:
