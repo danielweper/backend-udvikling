@@ -27,7 +27,8 @@ public interface IClient
     public Task ChangeGameSettings(GameSettingsChangedPacket packet); // JSON
     public Task PlayerKicked(KickPlayerPacket packet);
     public Task GameCreated(GameInfoPacket packet);
-    public void DeleteGame();
+    public Task DeleteGame(DeleteGamePacket packet);
     public Task StartGame(GameStartingPacket packet);
     public Task SubmitTurn(ExecuteTurnPacket packet);
+    public Task IsBattleOver(BattleIsOverPacket packet);
 }
