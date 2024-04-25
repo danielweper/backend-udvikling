@@ -37,9 +37,9 @@ public class Lobby
         _players.Remove(player);
     }
 
-    public void CreateNewGame(GameType gameType)
+    public Game CreateNewGame(GameType gameType)
     {
-        _game = new Game(gameType);
+        return _game = new Game(gameType);
     }
 
     public Game? GetGame()
