@@ -362,6 +362,7 @@ public class GameHub : Hub<IClient>
             return;
         }
 
+        player.Role = newPlayerRole;
 
         await SendMessagePacket($"You have successfully changed role. New role: {newPlayerRole}", MessageType.Accepted,
             Clients.Caller);
