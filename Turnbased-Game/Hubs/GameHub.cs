@@ -295,7 +295,7 @@ public class GameHub : Hub<IClient>
             Clients.Caller);
     }
 
-    public async Task RoleChaneRequest(byte playerId, byte lobbyId, PlayerRole newPlayerRole)
+    public async Task RoleChange(byte playerId, byte lobbyId, PlayerRole newPlayerRole)
     {
         await SendMessagePacket($"Request to change role: {playerId}, received", MessageType.Acknowledged,
             Clients.Caller);
@@ -317,69 +317,10 @@ public class GameHub : Hub<IClient>
         }
 
 
-        Player? playerHost = lobby.GetPlayer(0);
-
-        if (playerHost == null)
-        {
-            await SendMessagePacket("Can't find host in lobby", MessageType.Denied, Clients.Caller);
-            return;
-        }
-
-
-        /*await Clients.Client(playerHost.connectionId)
-            .ReceiveRoleChangeRequest(new RoleChangeRequestPacket(playerId, newPlayerRole));
-            */
-
-
-        // Chat response
-        /*// Create a TaskCompletionSource to await the client's response
-        var responseReceived = new TaskCompletionSource<bool>();
-
-        // Define a unique identifier for this request (e.g., using playerId)
-        string requestId = playerId.ToString();
-
-        // Register a response handler for this specific request
-        void HandleResponse(string responseRequestId, bool success)
-        {
-            if (responseRequestId == requestId)
-            {
-                // Unsubscribe the handler
-                ClientRoleChangeResponseReceived -= HandleResponse;
-
-                // Set the result based on the response
-                responseReceived.SetResult(success);
-            }
-        }
-
-        // Wire up the response handler to handle the client's response
-        ClientRoleChangeResponseReceived += HandleResponse;
-        
-
-        try
-        {
-            // Send role change request to the player host
-            await Clients.Client(playerHost.ConnectionId)
-                .ReceiveRoleChangeRequest(new RoleChangeRequestPacket(playerId, newPlayerRole));
-
-            // Wait for the client's response or timeout after a certain period
-            var response = await Task.WhenAny(responseReceived.Task, Task.Delay(TimeSpan.FromSeconds(10))); // Adjust timeout as needed
-
-            if (response == responseReceived.Task && response.Result)
-            {
-                // Client responded successfully
-                await SendMessagePacket("Role change request processed by host", MessageType.Acknowledged, Clients.Caller);
-            }
-            else
-            {
-                // Client response timed out or failed
-                await SendMessagePacket("Role change request failed or timed out", MessageType.Denied, Clients.Caller);
-            }
-        }
-        finally
-        {
-            // Clean up the response handler
-            ClientRoleChangeResponseReceived -= HandleResponse;
-        }*/
+        await SendMessagePacket($"You have successfully changed role. New role: {newPlayerRole}", MessageType.Accepted,
+            Clients.Caller);
+        await Clients.OthersInGroup($"{lobbyId}")
+            .PlayerRoleChanged(new PlayerRoleChangedPacket(playerId, newPlayerRole));
     }
 
     private byte GenerateLobbyId()

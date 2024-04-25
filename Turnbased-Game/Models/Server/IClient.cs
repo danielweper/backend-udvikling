@@ -19,7 +19,7 @@ public interface IClient
 
     public Task PlayerProfileUpdated(PlayerProfileChangedPacket profile);
 
-    public Task ReceiveRoleChangeRequest(RoleChangeRequestPacket packetpac);
+    public Task PlayerRoleChanged(PlayerRoleChangedPacket packet);
     public void RequestRoleChange(IRole role);
     public event Func<byte, IRole> RoleChangeRequested;
 
