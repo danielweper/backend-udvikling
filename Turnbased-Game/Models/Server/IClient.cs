@@ -29,4 +29,5 @@ public interface IClient
     public Task GameCreated(GameInfoPacket packet);
     public void DeleteGame();
     public Task StartGame(GameStartingPacket packet);
+    public Task SubmitTurn(ExecuteTurnPacket packet);
 }
