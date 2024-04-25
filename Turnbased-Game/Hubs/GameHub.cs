@@ -1,6 +1,5 @@
-using System.Drawing;
 using Microsoft.AspNetCore.SignalR;
-using Turnbased_Game.Models.Client;
+using Turnbased_Game.Models;
 using Turnbased_Game.Models.Packets.Client;
 using Turnbased_Game.Models.Packets.Server;
 using Turnbased_Game.Models.Packets.Shared;
@@ -14,6 +13,7 @@ namespace Turnbased_Game.Hubs;
 public class GameHub : Hub<IClient>
 {
     private const GameType DefaultGameType = GameType.RoundRobin;
+    private const string DefaultName = "Joe";
 
     private readonly Server _server = new();
     private readonly Random _random = new();
@@ -25,20 +25,29 @@ public class GameHub : Hub<IClient>
     }
 
 
-    // public async Task CreatePlayerProfile(string name, Color color = Red)
-    // {
-    //     
-    //     await SendMessagePacket()
-    //     
-    // }
+    public async Task CreatePlayerProfile(string name, Color color = Red)
+    {
+        PlayerProfile playerProfile = new(color, name, Context.ConnectionId);
+        await SendMessagePacket(
+            $"You have successfully created a playerProfile with Color: {color.ToString()}, Name: {name}",
+            MessageType.Accepted, Clients.Caller);
+    }
 
-    public async Task CreateLobby(int maxPlayerCount, LobbyVisibility lobbyVisibility, PlayerProfile playerProfile)
+    public PlayerProfile DefaultPlayerProfile(string connectionId)
+    {
+        return new PlayerProfile(Red, DefaultName, connectionId);
+    }
+
+    public async Task CreateLobby(int maxPlayerCount, LobbyVisibility lobbyVisibility,
+        PlayerProfile? playerProfile = null)
     {
         await SendMessagePacket("Received CreateLobby request", MessageType.Acknowledged,
             Clients.Caller); // Acknowledged
 
+        playerProfile ??= DefaultPlayerProfile(Context.ConnectionId);
+
         // Create host
-        Player host = new Player(GenerateParticipantId(null), playerProfile);
+        Player host = new Player(playerProfile.Name, GenerateParticipantId(null), playerProfile);
 
         // Create lobby
         byte lobbyId = GenerateLobbyId();
@@ -63,7 +72,11 @@ public class GameHub : Hub<IClient>
             return;
         }
 
-        Player player = new Player(GenerateParticipantId(lobby), playerProfile);
+        HashSet<string> playerNames = lobby.Players.Select(pl => pl.DisplayName).ToHashSet();
+
+        string displayName = GetDisplayName(playerProfile.Name, playerNames);
+
+        Player player = new Player(displayName, GenerateParticipantId(lobby), playerProfile);
 
         lobby.AddPlayer(player);
         await SendMessagePacket(message: $"You have successfully joined lobby: {lobbyId}", type: MessageType.Accepted,
@@ -75,6 +88,20 @@ public class GameHub : Hub<IClient>
         await Clients.Group($"{lobbyId}")
             .PlayerHasJoined(new PlayerJoinedLobbyPacket(playerId: player.ParticipantId, playerProfile));
         await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
+    }
+
+    private string GetDisplayName(string originalName, HashSet<string> playerNames)
+    {
+        string testName = originalName;
+        int suffix = 1;
+
+        while (playerNames.Contains(testName))
+        {
+            testName = $"{originalName} {suffix}";
+            suffix++;
+        }
+
+        return testName;
     }
 
     public async Task KickPlayerFromLobby(byte playerIdToKick, string reason, byte lobbyId)
