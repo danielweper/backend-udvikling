@@ -6,13 +6,8 @@ public class Player(string displayName, byte participantId, PlayerProfile player
 {
     public string DisplayName { get; set; } = displayName;
     public byte ParticipantId { get; set; } = participantId;
-    public PlayerRole Role { get; set; }
+    public PlayerRole Role { get; set; } = PlayerRole.Fighter;
     public PlayerProfile Profile { get; set; } = playerProfile;
     public bool ReadyStatus { get; set; }
-
-    public enum PlayerRole
-    {
-        Spectator,
-        Fighter
-    }
+    
 }
