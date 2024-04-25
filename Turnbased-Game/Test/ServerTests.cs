@@ -6,32 +6,19 @@ namespace Turnbased_Game.Test;
 
 public class ServerTests
 {
-
-    [Fact]
-    public async Task Test_AddLobby()
-    {
-        // Arrange
-        var server = new Server();
-        var host = new Player("1",0);
-        var lobby = new Lobby( 1, host, 9, LobbyVisibility.Private);
-        // Act
-        server.AddLobby(lobby);
-        
-        // Assert
-        Assert.Contains(server.GetAvailableLobbies(), l => l.id == lobby.Id);
-        Assert.False(server.LobbyIdIsFree(lobby.Id));
-    }
-
+    
     [Fact]
     public async Task Test_RemoveLobby()
     {
         // Arrange
         var server = new Server();
-        var host = new Player("1",0);
+        var host = new Player("Cossai",0);
         var lobby = new Lobby( 1, host, 9, LobbyVisibility.Private);
+        //Test_AddLobby
         server.AddLobby(lobby);
         
         Assert.Contains(server.GetAvailableLobbies(), lobbyInfo => lobbyInfo.id == lobby.Id);
+        Assert.False(server.LobbyIdIsFree(lobby.Id));
         
         // Act
         server.RemoveLobby(lobby);

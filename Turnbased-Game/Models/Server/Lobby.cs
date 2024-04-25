@@ -46,11 +46,7 @@ public class Lobby
     {
         return _game;
     }
-
-    public void StartGame()
-    {
-    }
-
+    
     public Player? GetPlayer(byte participantId)
     {
         foreach (var player in _players)
