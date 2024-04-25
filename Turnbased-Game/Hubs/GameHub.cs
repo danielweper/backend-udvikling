@@ -86,7 +86,7 @@ public class GameHub : Hub<IClient>
 
         // TODO: make actual player profile
         await Clients.Group($"{lobbyId}")
-            .PlayerHasJoined(new PlayerJoinedLobbyPacket(playerId: player.ParticipantId, playerProfile));
+            .PlayerHasJoined(new PlayerJoinedLobbyPacket(playerId: player.ParticipantId, displayName, playerProfile));
         await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
     }
 
