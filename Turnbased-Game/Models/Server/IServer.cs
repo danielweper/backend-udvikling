@@ -1,13 +1,16 @@
+using Turnbased_Game.Models.Packets.Server;
+using Turnbased_Game.Models.Packets.Shared;
+
 namespace Turnbased_Game.Models.Server;
 
-public interface IServer
+public interface IServer : IServerPackage
 {
-    public void Ping();
-    public void Acknowledge();
-    public void Accepted();
-    public void Denied();
-    public void InvalidRequest(string natureOfError);
+    Task ReceiveMessage(string user, string message);
+    Task Acknowledge(AcknowledgedPacket message);
+    Task Accepted(AcceptedPacket content);
+    Task Denied(DeniedPacket content);
+    Task InvalidRequest(InvalidPacket content);
 
-    public void UserMessage(IUserMessage content);
-    public void SystemMessage(ISystemMessage content);
+    Task UserMessage(IUserMessage content);
+    Task SystemMessage(ISystemMessage content);
 }
