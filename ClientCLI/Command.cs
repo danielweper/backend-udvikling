@@ -8,10 +8,17 @@ namespace ClientCLI;
 
 public enum Command : ushort
 {
-    Exit = 'x',
     DisplayLobbies = 'l',
     JoinLobby = 'j',
+    CreateLobby = 'c',
     DisconnectLobby = 'd',
     IsReady = 'y',
     IsNotReady = 'n',
+    KickPlayer = 'k',
+    StartGame = 's',
+    ChangeGameSettings = 'g',
+    RequestPlayerUpdate = 'r',
+    RequestRoleChange = 'o',
+    SendMessage = 'm',
+    SubmitTurn = 't',
 }
