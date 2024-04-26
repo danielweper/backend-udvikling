@@ -292,7 +292,7 @@ public class GameHub : Hub<IClient>
                 player.ExecuteTurn(playerTurn);
                 
                 //Register players turn
-                await Clients.Group($"{lobbyId}").SubmitTurn(new RegisterPlaterTurnPacket(playerTurn));
+                await Clients.Group($"{lobbyId}").SubmitTurn(new RegisterPlayerTurnPacket(playerTurn));
                 await SendMessagePacket("Your turn is executed", MessageType.Accepted, Clients.Caller);
                 
             }

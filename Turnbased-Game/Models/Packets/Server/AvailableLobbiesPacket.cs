@@ -6,4 +6,5 @@ public class AvailableLobbiesPacket(List<LobbyInfo> lobbyInfoList) : IAvailableL
 {
     public byte PacketId => 19;
     public List<LobbyInfo> LobbyInfo { get; set; } = lobbyInfoList;
+    public byte id { get; }
 }

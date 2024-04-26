@@ -6,4 +6,5 @@ public class KickPlayerPacket(byte playerId, string reason) : IPackage
 {
     public byte PlayerId { get; } = playerId;
     public string Reason { get; } = reason;
+    public byte PacketId { get; } = 19;
 }

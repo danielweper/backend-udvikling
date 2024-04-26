@@ -4,5 +4,5 @@ public class ChangeGameSettings: IPackage
 {
     public string settings { get; set; }
 
-    public byte id { get; } = 26;
+    public byte PacketId { get; } = 26;
 }

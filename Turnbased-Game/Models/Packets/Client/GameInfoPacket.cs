@@ -6,4 +6,5 @@ namespace Turnbased_Game.Models.Packets.Client;
 public class GameInfoPacket(GameInfo gameInfo) : IPackage
 {
     public GameInfo GameInfo { get; } = gameInfo;
+    public byte PacketId { get; }
 }

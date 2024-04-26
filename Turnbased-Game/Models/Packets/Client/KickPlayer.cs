@@ -4,5 +4,5 @@ public class KickPlayer: IPackage
 {
     public byte playerId { get; set; }
     public string reason { get; set; }
-    public byte id { get; } = 19;
+    public byte PacketId { get; } = 19;
 }
