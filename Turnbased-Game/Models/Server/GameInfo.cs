@@ -6,7 +6,7 @@ public readonly struct GameInfo(GameSettings gameSettings, List<Battle> battle)
     public List<Battle> Battles => battle;
 
 
-    public GameInfo(Game game) : this(game.settings, game.battles)
+    public GameInfo(Game game) : this(game.Settings, game.Battles)
     {
         
     }

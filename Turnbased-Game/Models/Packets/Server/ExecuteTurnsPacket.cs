@@ -1,6 +1,6 @@
 namespace Turnbased_Game.Models.Packets.Server;
 
-public class ExecuteTurnPacket(string turnInfo) : IServerPackage
+public class ExecuteTurnsPacket(string turnInfo) : IServerPackage
 {
     public byte Id => 31;
     
