@@ -272,6 +272,82 @@ public class GameHub : Hub<IClient>
             await SendMessagePacket("All Players are not ready", MessageType.Denied, Clients.Caller);
         }
     }
+    
+    public async Task RegisterPlayerTurn(byte lobbyId, byte playerId, byte battleId, string playerTurn)
+    {
+        // Acknowledged
+        await SendMessagePacket("Received Start Game request", MessageType.Acknowledged, Clients.Caller);
+        var lobby = _server.GetLobby(lobbyId);
+        var game = lobby?.GetGame();
+        //Check of a lobby has a game
+        if (game != null)
+        {
+            //Get the battle player is in
+            var battle = game.GetBattle(battleId);
+            
+            var player = battle?.Figthers.Find(p =>  p.ParticipantId == playerId);
+            if (battle != null && player != null && battle.GetPlayersToExecuteTurn().Contains(player))
+            {
+                battle.UpdateExecutedTurn(player);
+                player.ExecuteTurn(playerTurn);
+                
+                //Register players turn
+                await Clients.Group($"{lobbyId}").SubmitTurn(new RegisterPlaterTurnPacket(playerTurn));
+                await SendMessagePacket("Your turn is executed", MessageType.Accepted, Clients.Caller);
+                
+            }
+        }
+        else
+        {
+            await SendMessagePacket("The lobby doesn't exist or the lobby doesn't have a game", MessageType.Denied, Clients.Caller);
+        }
+    }
+    
+    public async Task ExecuteBattleRound(byte lobbyId, byte playerId, byte battleId, string playerTurn)
+    {
+        // Acknowledged
+        await SendMessagePacket("Received ExecuteBattle request", MessageType.Acknowledged, Clients.Caller);
+        var lobby = _server.GetLobby(lobbyId);
+        var game = lobby?.GetGame();
+        //Check of a lobby has a game
+        if (game != null)
+        {
+            //Get the battle player is in
+            var battle = game.GetBattle(battleId);
+            
+            var player = battle?.Figthers.Find(p =>  p.ParticipantId == playerId);
+            if (battle != null && player != null && battle.GetPlayersToExecuteTurn().Count==0)
+            {
+                /*battle.UpdateExecutedTurn(player);
+                player.ExecuteTurn(playerTurn);
+                battle.ExecutePlayerTurn(player);*/
+                battle.ExecuteRound();
+                
+                if (battle.HasAWinner())
+                {
+                    // Send packet BattleOver
+                    await Clients.Group($"{lobbyId}").IsBattleOver(new BattleIsOverPacket(true,battle.Winners));
+                }
+                else
+                {
+                    //add Figther back in not execute for the next round
+                    foreach (var fighter in battle.Figthers)
+                    {
+                        battle.PlayersToExecuteTurn.Add(fighter);
+                        fighter.ExecutedStatus = false;
+                    }
+
+                    //Register players turn
+                    await Clients.Group($"{lobbyId}").ExecuteRound(new ExecuteTurnsPacket(playerTurn));
+                    await SendMessagePacket("Your turn is executed", MessageType.Accepted, Clients.Caller);
+                }
+            }
+        }
+        else
+        {
+            await SendMessagePacket("The lobby doesn't exist or the lobby doesn't have a game", MessageType.Denied, Clients.Caller);
+        }
+    }
 
     public async Task ToggleIsPlayerReady(byte lobbyId, byte playerId, bool ready)
     {
