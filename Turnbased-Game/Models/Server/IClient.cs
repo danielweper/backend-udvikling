@@ -21,8 +21,10 @@ public interface IClient
 
     public Task PlayerRoleChanged(PlayerRoleChangedPacket packet);
     public Task PlayerProfileCreated(PlayerProfileCreatedPacket packet);
-    public Task<byte> CreateLobbyRequest(CreateLobbyPacket packet);
+
+    public Task PlayerLeftBattle(PlayerLeftBattlePacket packet);
     public Task ChangeGameSettings(GameSettingsChangedPacket packet); // JSON
+
     public Task PlayerKicked(KickPlayerPacket packet);
     public Task GameCreated(GameInfoPacket packet);
     public Task DeleteGame(DeleteGamePacket packet);
