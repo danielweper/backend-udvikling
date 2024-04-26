@@ -272,7 +272,30 @@ public class GameHub : Hub<IClient>
             await SendMessagePacket("All Players are not ready", MessageType.Denied, Clients.Caller);
         }
     }
-    
+
+    private async Task<bool> NoLobbyFound(Lobby? lobby)
+    {
+        if (lobby != null) return false;
+        await SendMessagePacket(caller: Clients.Caller, message: "This lobby does not exist",
+            type: MessageType.Denied);
+        return true;
+    }
+
+
+    private async Task<bool> NoPlayerFound(Player? player)
+    {
+        if (player != null) return false;
+        await SendMessagePacket("The player doesn't exist in the lobby", MessageType.Denied, Clients.Caller);
+        return true;
+    }
+
+    private async Task<bool> NoGameFound(Game? game)
+    {
+        if (game != null) return false;
+        await SendMessagePacket("The lobby doesn't have an existing game", MessageType.Denied,
+            Clients.Caller);
+        return true;
+    }
     public async Task RegisterPlayerTurn(byte lobbyId, byte playerId, byte battleId, string playerTurn)
     {
         // Acknowledged
@@ -356,10 +379,8 @@ public class GameHub : Hub<IClient>
 
         var lobby = _server.GetLobby(lobbyId);
 
-        if (lobby == null)
+        if (NoLobbyFound(lobby).Result)
         {
-            await SendMessagePacket(caller: Clients.Caller, message: "This lobby does not exist",
-                type: MessageType.Denied);
             return;
         }
 
