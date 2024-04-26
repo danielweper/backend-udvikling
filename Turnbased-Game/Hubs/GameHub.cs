@@ -217,7 +217,8 @@ public class GameHub : Hub<IClient>
             await SendMessagePacket("The lobby doesn't exist", MessageType.Denied, Clients.Caller);
         }
     }
-
+    
+    //Start the Game(battle/battles)
     public async Task StartGame(byte lobbyId)
     {
         // Acknowledged
@@ -225,25 +226,50 @@ public class GameHub : Hub<IClient>
 
         var lobby = _server.GetLobby(lobbyId);
 
-        //Check of a lobby has a game
-        if (lobby?.GetGame() != null)
+        var allPlayersReady = lobby != null && lobby.Players.All(p => p.ReadyStatus);
+        if (allPlayersReady)
         {
-            bool playersReady = lobby.Players.All(p => p.ReadyStatus);
-            if (playersReady)
-            {
-                lobby.StartGame();
+            //Get all Fighters 
+            var fighters = lobby?.Players.Where(p => p.Role == PlayerRole.Fighter).ToList();
 
+            //Check of a lobby has a game
+            var game = lobby?.GetGame();
+            if (fighters != null && game != null)
+            {
+                //Check if there is even number of Fighters
+                if (fighters.Count % 2 != 0)
+                {
+                    await SendMessagePacket("Game cannot start, need even number of Fighters", MessageType.Denied,
+                        Clients.Caller);
+                    return;
+                }
+
+                for (var i = 0; i < fighters.Count; i += 2)
+                {
+                    //Create battle
+                    var battle = new Battle(GenerateBattleId(game));
+                    //game.InitializeBattles(battle);
+
+                    //Add Two players to a battle
+                    battle.AddPlayer(fighters[i]);
+                    battle.AddPlayer(fighters[i + 1]);
+                    
+                    //Add battle to game
+                    game.Battles.Add(battle);
+                }
+                
+                //Send packet to client
                 await Clients.Group($"{lobbyId}").StartGame(new GameStartingPacket(DateTime.Now));
                 await SendMessagePacket("Game Started", MessageType.Accepted, Clients.Caller);
             }
             else
             {
-                await SendMessagePacket("All Players are not ready", MessageType.Denied, Clients.Caller);
+                await SendMessagePacket("The game or fighters do not exist", MessageType.Denied, Clients.Caller);
             }
         }
         else
         {
-            await SendMessagePacket("The lobby doesn't exist", MessageType.Denied, Clients.Caller);
+            await SendMessagePacket("All Players are not ready", MessageType.Denied, Clients.Caller);
         }
     }
 
@@ -295,7 +321,7 @@ public class GameHub : Hub<IClient>
         if (lobby.GetGame() != null)
         {
             //Set game settings to the new settings
-            lobby.GetGame()!.settings.settings = newGameSettings.settings;
+            lobby.GetGame()!.Settings.settings = newGameSettings.settings;
 
             //send packet
             await Clients.Group("lobbyId").ChangeGameSettings(new GameSettingsChangedPacket(newGameSettings.settings));
@@ -393,6 +419,20 @@ public class GameHub : Hub<IClient>
 
         return participantId;
     }
+    
+    private byte GenerateBattleId(Game? game)
+    {
+        var battleIds = game?.Battles.Select(battle => battle.BattleId).ToHashSet() ?? [];
+
+        byte battleId;
+        do
+        {
+            battleId = (byte)_random.Next(1, 256);
+        } while (!battleIds.Contains(battleId));
+
+        return battleId;
+    }
+
 
     private async Task SendMessagePacket(string message, MessageType type, IClient caller)
     {
