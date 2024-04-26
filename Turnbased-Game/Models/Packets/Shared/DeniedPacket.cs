@@ -5,4 +5,5 @@ public class DeniedPacket(string ackMessage, DateTime timestamp) : IPackage
 {
     public string AckMessage { get; } = ackMessage;
     public DateTime Timestamp { get; } = timestamp;
+    public byte PacketId => 4;
 }

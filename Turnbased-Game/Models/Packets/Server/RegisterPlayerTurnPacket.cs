@@ -1,7 +1,8 @@
 namespace Turnbased_Game.Models.Packets.Server;
 
-public class RegisterPlaterTurnPacket(string turnInfo) : IServerPackage
+public class RegisterPlayerTurnPacket(string turnInfo) : IServerPackage
 {
     
     public string TurnInfo { get; set; } = turnInfo;
+    public byte PacketId => 39;
 }

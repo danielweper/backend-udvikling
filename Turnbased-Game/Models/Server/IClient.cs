@@ -27,7 +27,7 @@ public interface IClient
     public Task GameCreated(GameInfoPacket packet);
     public Task DeleteGame(DeleteGamePacket packet);
     public Task StartGame(GameStartingPacket packet);
-    public Task SubmitTurn(RegisterPlaterTurnPacket packet);
+    public Task SubmitTurn(RegisterPlayerTurnPacket packet);
     public Task IsBattleOver(BattleIsOverPacket packet);
     public Task ExecuteRound(ExecuteTurnsPacket packet);
 }

@@ -7,4 +7,5 @@ public class PlayerProfileUpdatedInLobbyPacket(byte participantId, string displa
     public byte ParticipantId { get; } = participantId;
     public string DisplayName { get; } = displayName;
     public PlayerProfile playerProfile { get; } = newPlayerProfile;
+    public byte PacketId => 25;
 }
