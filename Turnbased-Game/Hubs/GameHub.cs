@@ -300,6 +300,66 @@ public class GameHub : Hub<IClient>
             Clients.Caller);
         return true;
     }
+
+    public async Task LeaveBattle(byte lobbyId, byte participantId, byte battleId)
+    {
+        // Acknowledged
+        await SendMessagePacket("Received leave Game request", MessageType.Acknowledged, Clients.Caller);
+
+        var lobby = _server.GetLobby(lobbyId);
+
+        if (NoLobbyFound(lobby).Result)
+        {
+            return;
+        }
+
+        var player = lobby.GetPlayer(participantId);
+        if (NoPlayerFound(player).Result)
+        {
+            return;
+        }
+
+        var game = lobby.GetGame();
+
+        if (NoGameFound(game).Result)
+        {
+            return;
+        }
+
+        var battle = game.GetBattle(battleId);
+
+        if (battle != null)
+        {
+            battle.EndGamePrematurely(player);
+            await SendMessagePacket("You have successfully left the battle", MessageType.Accepted, Clients.Caller);
+
+            if (battle.Fighters.Select(pl => pl.ParticipantId).Contains(participantId))
+            {
+                if (battle.Winner != null)
+                {
+                    await Clients.Client(battle.Winner.Profile.ConnectionId)
+                        .PlayerLeftBattle(new PlayerLeftBattlePacket( /* Todo*/));
+                }
+                else
+                {
+                    await Clients.Client( /*battle.Fighters[0].ParticipantId.Equals(participantId)*/
+                            battle.Fighters[0].ParticipantId != participantId
+                                ? battle.Fighters[0].Profile.ConnectionId
+                                : battle.Fighters[1].Profile.ConnectionId)
+                        .PlayerLeftBattle(new PlayerLeftBattlePacket( /*Todo*/));
+                }
+            }
+            else
+            {
+                await SendMessagePacket("Player wasn't found in requested battle", MessageType.Denied, Clients.Caller);
+            }
+        }
+        else
+        {
+            await SendMessagePacket("No battles found matching battleId", MessageType.Denied, Clients.Caller);
+        }
+    }
+
     public async Task RegisterPlayerTurn(byte lobbyId, byte playerId, byte battleId, string playerTurn)
     {
         // Acknowledged
