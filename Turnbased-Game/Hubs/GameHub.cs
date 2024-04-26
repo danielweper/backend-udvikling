@@ -217,7 +217,7 @@ public class GameHub : Hub<IClient>
             await SendMessagePacket("The lobby doesn't exist", MessageType.Denied, Clients.Caller);
         }
     }
-    
+
     //Start the Game(battle/battles)
     public async Task StartGame(byte lobbyId)
     {
@@ -253,11 +253,11 @@ public class GameHub : Hub<IClient>
                     //Add Two players to a battle
                     battle.AddPlayer(fighters[i]);
                     battle.AddPlayer(fighters[i + 1]);
-                    
+
                     //Add battle to game
                     game.Battles.Add(battle);
                 }
-                
+
                 //Send packet to client
                 await Clients.Group($"{lobbyId}").StartGame(new GameStartingPacket(DateTime.Now));
                 await SendMessagePacket("Game Started", MessageType.Accepted, Clients.Caller);
@@ -307,25 +307,25 @@ public class GameHub : Hub<IClient>
         {
             //Get the battle player is in
             var battle = game.GetBattle(battleId);
-            
-            var player = battle?.Figthers.Find(p =>  p.ParticipantId == playerId);
+
+            var player = battle?.Figthers.Find(p => p.ParticipantId == playerId);
             if (battle != null && player != null && battle.GetPlayersToExecuteTurn().Contains(player))
             {
                 battle.UpdateExecutedTurn(player);
                 player.ExecuteTurn(playerTurn);
-                
+
                 //Register players turn
-                await Clients.Group($"{lobbyId}").SubmitTurn(new RegisterPlaterTurnPacket(playerTurn));
+                await Clients.Group($"{lobbyId}").SubmitTurn(new RegisterPlayerTurnPacket(playerTurn));
                 await SendMessagePacket("Your turn is executed", MessageType.Accepted, Clients.Caller);
-                
             }
         }
         else
         {
-            await SendMessagePacket("The lobby doesn't exist or the lobby doesn't have a game", MessageType.Denied, Clients.Caller);
+            await SendMessagePacket("The lobby doesn't exist or the lobby doesn't have a game", MessageType.Denied,
+                Clients.Caller);
         }
     }
-    
+
     public async Task ExecuteBattleRound(byte lobbyId, byte playerId, byte battleId, string playerTurn)
     {
         // Acknowledged
@@ -337,19 +337,19 @@ public class GameHub : Hub<IClient>
         {
             //Get the battle player is in
             var battle = game.GetBattle(battleId);
-            
-            var player = battle?.Figthers.Find(p =>  p.ParticipantId == playerId);
-            if (battle != null && player != null && battle.GetPlayersToExecuteTurn().Count==0)
+
+            var player = battle?.Figthers.Find(p => p.ParticipantId == playerId);
+            if (battle != null && player != null && battle.GetPlayersToExecuteTurn().Count == 0)
             {
                 /*battle.UpdateExecutedTurn(player);
                 player.ExecuteTurn(playerTurn);
                 battle.ExecutePlayerTurn(player);*/
                 battle.ExecuteRound();
-                
+
                 if (battle.HasAWinner())
                 {
                     // Send packet BattleOver
-                    await Clients.Group($"{lobbyId}").IsBattleOver(new BattleIsOverPacket(true,battle.Winners));
+                    await Clients.Group($"{lobbyId}").IsBattleOver(new BattleIsOverPacket(true, battle.Winners));
                 }
                 else
                 {
@@ -368,7 +368,8 @@ public class GameHub : Hub<IClient>
         }
         else
         {
-            await SendMessagePacket("The lobby doesn't exist or the lobby doesn't have a game", MessageType.Denied, Clients.Caller);
+            await SendMessagePacket("The lobby doesn't exist or the lobby doesn't have a game", MessageType.Denied,
+                Clients.Caller);
         }
     }
 
@@ -516,7 +517,7 @@ public class GameHub : Hub<IClient>
 
         return participantId;
     }
-    
+
     private byte GenerateBattleId(Game? game)
     {
         var battleIds = game?.Battles.Select(battle => battle.BattleId).ToHashSet() ?? [];
