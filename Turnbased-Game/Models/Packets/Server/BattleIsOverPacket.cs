@@ -4,7 +4,7 @@ namespace Turnbased_Game.Models.Packets.Server;
 
 public class BattleIsOverPacket(bool battleFinished, Player? battleWinner): IServerPackage
 {
-    public byte PacketId => 33;
+    public byte PackageId => 33;
     public bool BattleFinished { get; set; } = battleFinished;
     public Player? BattleWinner { get; } = battleWinner;
 }

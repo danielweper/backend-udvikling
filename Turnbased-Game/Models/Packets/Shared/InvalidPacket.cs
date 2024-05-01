@@ -4,5 +4,5 @@ public class InvalidPacket(string ackMessage, DateTime timestamp): IPackage
 {
     public string AckMessage { get; } = ackMessage;
     public DateTime Timestamp { get; } = timestamp;
-    public byte PacketId => 5;
+    public byte PackageId => 5;
 }

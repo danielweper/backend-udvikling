@@ -5,6 +5,6 @@ namespace Turnbased_Game.Models.Packets.Server;
 
 public class LobbyInfoPacket(LobbyInfo lobbyInfo) : IPackage
 {
-    public byte PacketId => 13;
+    public byte PackageId => 13;
     public LobbyInfo LobbyInfo { get; } = lobbyInfo;
 }

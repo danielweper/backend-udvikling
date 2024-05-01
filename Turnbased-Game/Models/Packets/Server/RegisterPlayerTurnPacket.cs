@@ -4,5 +4,5 @@ public class RegisterPlayerTurnPacket(string turnInfo) : IServerPackage
 {
     
     public string TurnInfo { get; set; } = turnInfo;
-    public byte PacketId => 39;
+    public byte PackageId => 39;
 }

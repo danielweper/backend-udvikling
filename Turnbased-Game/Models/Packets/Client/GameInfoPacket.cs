@@ -5,5 +5,6 @@ namespace Turnbased_Game.Models.Packets.Client;
 
 public class GameInfoPacket(GameInfo gameInfo) : IPackage
 {
+    public byte PackageId => throw new NotImplementedException();
     public GameInfo GameInfo { get; } = gameInfo;
 }

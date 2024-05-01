@@ -6,5 +6,5 @@ public class PlayerReadyStatusPacket(bool  newReadyStatus, byte playerId) : IPac
 {
     public bool NewReadyStatus { get; } = newReadyStatus;
     public byte PlayerId { get; } = playerId;
-    public byte PacketId => 41;
+    public byte PackageId => 41;
 }
