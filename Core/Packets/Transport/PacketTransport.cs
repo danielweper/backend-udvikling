@@ -1,4 +1,4 @@
-namespace Core.Packets;
+namespace Core.Packets.Transport;
 
 public abstract class PacketTransport
 {
