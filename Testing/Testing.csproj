@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Client\Client.csproj" />
+    <ProjectReference Include="..\Client\ClientLogic.csproj" />
     <ProjectReference Include="..\Turnbased-Game\Turnbased-Game.csproj" />
   </ItemGroup>
 

@@ -2,12 +2,13 @@
 using Moq;
 using Turnbased_Game.Hubs;
 using Turnbased_Game.Models;
-using Turnbased_Game.Models.Packets.Server;
-using Turnbased_Game.Models.Packets.Shared;
-using Turnbased_Game.Models.Server;
-using static Turnbased_Game.Models.Color;
-using Color = Turnbased_Game.Models.Color;
+using Core.Packets.Server;
+using Core.Packets.Shared;
+using Server;
+using Core.Model;
 using Xunit;
+using ServerLogic.Dummy;
+using ServerLogic;
 
 namespace Turnbased_Game.Test;
 
