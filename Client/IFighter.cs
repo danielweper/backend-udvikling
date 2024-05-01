@@ -1,6 +1,4 @@
-using Turnbased_Game.Models.Server;
-
-namespace ClientLogic;
+namespace Turnbased_Game.Models.Client;
 
 public interface IFighter
 

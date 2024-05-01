@@ -26,7 +26,7 @@ connection.on("ReceiveButton", function (user, color) {
 connection.on("ReceiveClass", (person) => {
     var li = document.createElement("li");
     document.getElementById("messagesList").appendChild(li);
-    
+
     li.textContent = `sent Person with name: ${person.name} & age: ${person.age}`;
 });
 
@@ -47,22 +47,21 @@ document.getElementById("sendButton").addEventListener("click", function (event)
 
 var color = document.getElementById("coloredButton");
 color.addEventListener("click", function (event) {
-        var user = document.getElementById("userInput").value;
-        var buttonColor = color.value;
-        var message = `${buttonColor}`;
-        console.log(buttonColor);
+    var user = document.getElementById("userInput").value;
+    var buttonColor = color.value;
+    var message = `${buttonColor}`;
+    console.log(buttonColor);
 
-        connection.invoke("ClickButton", user, message).catch(function (err) {
-            return console.error(err.toString());
-        });
-        console.log("eee");
-        event.preventDefault();
+    connection.invoke("ClickButton", user, message).catch(function (err) {
+        return console.error(err.toString());
     });
+    console.log("eee");
+    event.preventDefault();
+});
 
 document.getElementById("sendClass").addEventListener("click", function (event) {
-    const person = {name:"Danny", age:25};
     
-    connection.invoke("SendClass", person).catch(function (err) {
+    connection.invoke("CreateLobby").catch(function (err) {
         console.log("didn't sent class");
         return console.error(err.toString());
     });

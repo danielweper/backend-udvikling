@@ -1,6 +1,12 @@
+
+using System.Drawing;
+
+
 namespace Turnbased_Game.Models;
 
-public interface IPlayerProfile
+public abstract class IPlayerProfile
 {
-    
+    public Color Color;
+    //public Image avatar;
+    public string Name;
 }
