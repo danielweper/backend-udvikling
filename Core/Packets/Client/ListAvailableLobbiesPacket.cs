@@ -1,6 +1,6 @@
 namespace Core.Packets.Client;
 
-public class ListAvailableLobbies : IPacket
+public class ListAvailableLobbiesPacket : IPacket
 {
     public PacketType type => PacketType.ListAvailableLobbies;
 }

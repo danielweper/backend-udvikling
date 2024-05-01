@@ -1,6 +1,6 @@
 namespace Core.Packets.Server;
 
-public class PlayerProfileChanged : IPacket
+public class PlayerProfileChangedPacket : IPacket
 {
     public PacketType type => PacketType.ChangeGameSettings;
     public int PlayerId { get; }

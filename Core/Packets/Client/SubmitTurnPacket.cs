@@ -1,6 +1,6 @@
 namespace Core.Packets.Client;
 
-public class SubmitTurn : IPacket
+public class SubmitTurnPacket : IPacket
 {
     public PacketType type => PacketType.SubmitTurn;
 

@@ -1,6 +1,6 @@
 namespace Core.Packets.Shared;
 
-public class Denied : IPacket
+public class DeniedPacket : IPacket
 {
     public PacketType type => PacketType.Denied;
 }

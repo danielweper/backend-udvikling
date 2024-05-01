@@ -1,6 +1,6 @@
 namespace Core.Packets.Server;
 
-public class LobbyInfo : IPacket
+public class LobbyInfoPacket : IPacket
 {
     public PacketType type => PacketType.LobbyInfo;
 }

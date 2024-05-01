@@ -1,6 +1,6 @@
 namespace Core.Packets.Client;
 
-public class DisconnectLobby : IPacket
+public class DisconnectLobbyPacket : IPacket
 {
     public PacketType type => PacketType.DisconnectLobby;
 }

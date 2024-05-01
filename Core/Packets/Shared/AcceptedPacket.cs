@@ -1,6 +1,6 @@
 namespace Core.Packets.Shared;
 
-public class Accepted : IPacket
+public class AcceptedPacket : IPacket
 {
     public PacketType type => PacketType.Accepted;
 }

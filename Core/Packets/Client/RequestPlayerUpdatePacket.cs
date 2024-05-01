@@ -1,6 +1,6 @@
 namespace Core.Packets.Client;
 
-public class RequestPlayerUpdate : IPacket
+public class RequestPlayerUpdatePacket : IPacket
 {
     public PacketType type => PacketType.RequestPlayerUpdate;
 

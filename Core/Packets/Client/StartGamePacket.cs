@@ -1,6 +1,6 @@
 namespace Core.Packets.Client;
 
-public class StartGame : IPacket
+public class StartGamePacket : IPacket
 {
     public PacketType type => PacketType.StartGame;
 }

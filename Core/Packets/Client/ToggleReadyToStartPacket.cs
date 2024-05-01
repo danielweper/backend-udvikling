@@ -1,6 +1,6 @@
 namespace Core.Packets.Client;
 
-public class ToggleReadyToStart : IPacket
+public class ToggleReadyToStartPacket : IPacket
 {
     public PacketType type => PacketType.ToggleReadyToStart;
 

@@ -1,6 +1,6 @@
 namespace Core.Packets.Shared;
 
-public class InvalidRequest : IPacket
+public class InvalidRequestPacket : IPacket
 {
     public PacketType type => PacketType.InvalidRequest;
 }
