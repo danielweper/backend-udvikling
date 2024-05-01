@@ -1,5 +1,3 @@
-using Turnbased_Game.Models.Client;
-using Turnbased_Game.Models.Packets.Shared;
 using Turnbased_Game.Models.Server;
 
 namespace Turnbased_Game.Models.Packets.Server;

@@ -1,6 +1,6 @@
 namespace Turnbased_Game.Models.Packets.Client;
 
-public class StartGame: IPackage
+public class StartGame : IPackage
 {
-   public byte id { get; } = 22;
+   public byte PacketId { get; } = 22;
 }

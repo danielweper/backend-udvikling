@@ -2,7 +2,6 @@ namespace Turnbased_Game.Models.Packets.Client;
 
 public class RequestRoleChange : IPackage
 {
-    public byte id => 30;
-
+    public byte PacketId => 30;
     public IRole newRole;
 }
