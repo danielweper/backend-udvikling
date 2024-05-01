@@ -7,9 +7,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Turnbased-Game", "Turnbased
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Testing", "..\Testing\Testing.csproj", "{AC3B6B65-6951-440B-9FBC-9B5109F6A1BF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client", "..\Client\Client.csproj", "{5996C971-77F2-4B67-9A2D-B99C91DC0824}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Client", "..\Client\Client.csproj", "{5996C971-77F2-4B67-9A2D-B99C91DC0824}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientCLI", "..\ClientCLI\ClientCLI.csproj", "{6457FD44-8A6D-4F66-BC3B-175285914692}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClientCLI", "..\ClientCLI\ClientCLI.csproj", "{6457FD44-8A6D-4F66-BC3B-175285914692}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core", "..\Core\Core.csproj", "{4B559F1F-22F3-4BC0-930C-C92687E1693F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{6457FD44-8A6D-4F66-BC3B-175285914692}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6457FD44-8A6D-4F66-BC3B-175285914692}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6457FD44-8A6D-4F66-BC3B-175285914692}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4B559F1F-22F3-4BC0-930C-C92687E1693F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B559F1F-22F3-4BC0-930C-C92687E1693F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B559F1F-22F3-4BC0-930C-C92687E1693F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B559F1F-22F3-4BC0-930C-C92687E1693F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
