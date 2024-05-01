@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using Turnbased_Game.Models.Server;
 
 namespace ClientCLI;
 using ClientLogic;
@@ -39,7 +40,8 @@ class CLI
         }
     }
 
-    private void HandleConnectedState(Command command, Client client)
+
+    private async void HandleConnectedState(Command command, Client client)
     {
         switch (command)
         {
@@ -49,6 +51,7 @@ class CLI
                 break;
             case Command.JoinLobby:
                 Console.WriteLine("Joining lobby...");
+                await client.CreateLobby(6, LobbyVisibility.Public, null);
                 client.JoinLobby(1);
                 
                 break;

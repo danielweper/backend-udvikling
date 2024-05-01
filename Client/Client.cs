@@ -2,6 +2,8 @@ using Turnbased_Game.Models;
 using Turnbased_Game.Models.Packets;
 using Turnbased_Game.Models.Packets.Client;
 using Turnbased_Game.Models.Packets.Transport;
+using Microsoft.AspNetCore.SignalR.Client;
+using Turnbased_Game.Models.Server;
 
 namespace ClientLogic;
 
@@ -12,16 +14,22 @@ public class Client : IClient
     public ClientStates currentState { get; protected set; }
     protected IPackage? lastPackage = null;
     protected PacketTransport transporter;
+    
+    private readonly HubConnection _GameHubConnection;
+    private readonly string _hubUrl = "http://localhost:8080/gameHub";
 
     public Client(PacketTransport transporter)
     {
         this.transporter = transporter;
         this.transporter.PacketReceived += ReceivePackage;
-
+        _GameHubConnection = new HubConnectionBuilder()
+            .WithUrl(_hubUrl)
+            .Build();
         OnConnected += delegate () { currentState |= ClientStates.IsConnected; };
         JoinedLobby += delegate (string s) { currentState |= ClientStates.IsInLobby; };
         LeftLobby += delegate (string s) { currentState &= ~ClientStates.IsInLobby; };
         GameStarting += delegate (ulong u) { currentState |= ClientStates.IsInGame; };
+        StartConnectionAsync().Wait();
     }
 
     public event Action? OnConnected;
@@ -43,6 +51,19 @@ public class Client : IClient
     public event Action<byte, IRole>? RoleChangeRequested;
 
     public bool isHost => (this.id == 1);
+    private async Task StartConnectionAsync()
+    {
+        try
+        {
+            await _GameHubConnection.StartAsync();
+            OnConnected?.Invoke();
+            Console.WriteLine("SignalR connection established.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error establishing SignalR connection: {ex.Message}");
+        }
+    }
 
     public void SendMessage(string message)
     {
@@ -69,7 +90,19 @@ public class Client : IClient
         var packet = new ListAvailableLobbies();
         SendPackage(packet);
     }
-
+    public async Task CreateLobby(int maxPlayerCount, LobbyVisibility lobbyVisibility, PlayerProfile? playerProfile = null)
+    // Change to a create lobby packet instead
+    {
+        try
+        {
+            await _GameHubConnection.InvokeAsync("CreateLobby", maxPlayerCount, lobbyVisibility, playerProfile);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error establishing SignalR connection: {ex.Message}");
+            // Handle exceptions in CLi program?
+        }
+    }
     public void JoinLobby(byte lobbyId)
     {
         var packet = new JoinLobby
@@ -164,11 +197,7 @@ public class Client : IClient
 
     public void KickPlayer(byte playerId, string reason)
     {
-       KickPlayer kickPlayer = new KickPlayer
-       {
-           playerId = playerId,
-           reason = reason
-       };
+        KickPlayerPacket kickPlayer = new KickPlayerPacket(playerId, reason);
        if (this.isHost)
        { 
            SendPackage(kickPlayer);
