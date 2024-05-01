@@ -1,7 +1,8 @@
-using Turnbased_Game.Models;
-using Turnbased_Game.Models.Packets;
-using Turnbased_Game.Models.Packets.Client;
-using Turnbased_Game.Models.Packets.Transport;
+using Core.Model;
+using Core.Packets;
+using Core.Packets.Client;
+using Core.Packets.Shared;
+using Core.Packets.Transport;
 
 namespace ClientLogic;
 
@@ -10,7 +11,7 @@ public class Client : IClient
     public byte id { get; protected set; }
     public byte lobbyId { get; protected set; }
     public ClientStates currentState { get; protected set; }
-    protected IPackage? lastPackage = null;
+    protected IPacket? lastPackage = null;
     protected PacketTransport transporter;
 
     public Client(PacketTransport transporter)
@@ -28,7 +29,7 @@ public class Client : IClient
     public event Action<byte, string>? ReceivedUserMessage;
     public event Action<string>? ReceivedSystemMessage;
     public event Action<byte, string>? ReceivedMessage;
-    public event Action<IPackage>? ReceivedPackage;
+    public event Action<IPacket>? ReceivedPackage;
     public event Action? BadRequest;
     public event Action<bool>? BattleIsOver;
     public event Action<string>? TurnIsOver;
@@ -46,7 +47,8 @@ public class Client : IClient
 
     public void SendMessage(string message)
     {
-        SendMessage messagePacket = new SendMessage{
+        var messagePacket = new SendMessagePacket
+        {
             senderId = this.id,
             message = message
         };
@@ -56,7 +58,7 @@ public class Client : IClient
 
     public void SubmitTurn(string turn)
     {
-        var packet = new SubmitTurn
+        var packet = new SubmitTurnPacket
         {
             turnInfo = turn
         };
@@ -66,13 +68,13 @@ public class Client : IClient
 
     public void ListAvailableLobbies()
     {
-        var packet = new ListAvailableLobbies();
+        var packet = new ListAvailableLobbiesPacket();
         SendPackage(packet);
     }
 
     public void JoinLobby(byte lobbyId)
     {
-        var packet = new JoinLobby
+        var packet = new JoinLobbyPacket
         {
             lobbyId = lobbyId
         };
@@ -82,14 +84,14 @@ public class Client : IClient
 
     public void DisconnectLobby()
     {
-        var packet = new DisconnectLobby();
+        var packet = new DisconnectLobbyPacket();
         SendPackage(packet);
         currentState = currentState & ~ClientStates.IsInLobby;
     }
 
     public void IsReady()
     {
-        var packet = new ToggleReadyToStart
+        var packet = new ToggleReadyToStartPacket
         {
             newStatus = true,
         };
@@ -99,7 +101,7 @@ public class Client : IClient
 
     public void IsNotReady()
     {
-        var packet = new ToggleReadyToStart
+        var packet = new ToggleReadyToStartPacket
         {
             newStatus = false,
         };
@@ -109,7 +111,7 @@ public class Client : IClient
 
     public void RequestProfileUpdate(IPlayerProfile profile)
     {
-        var packet = new RequestPlayerUpdate
+        var packet = new RequestPlayerUpdatePacket
         {
             newProfile = profile,
         };
@@ -119,7 +121,7 @@ public class Client : IClient
 
     public void RequestRoleChange(IRole role)
     {
-        var packet = new RequestRoleChange
+        var packet = new RequestRoleChangePacket
         {
             newRole = role,
         };
@@ -129,15 +131,15 @@ public class Client : IClient
 
     public void CreateLobby()
     {
-        CreateLobby createLobby = new CreateLobby();
+        var createLobby = new CreateLobbyPacket();
         SendPackage(createLobby);
         ReceivedPackage += (package) =>
         {
-            if (package is IAccepted)
+            if (package is AcceptedPacket)
             {
                 Console.WriteLine("Lobby was succesfully created");
             }
-            else if (package is IDenied)
+            else
             {
                 Console.WriteLine("Lobby creation faield");
             }
@@ -148,7 +150,7 @@ public class Client : IClient
     }
     public void ChangeGameSettings(string settings)
     {
-        ChangeGameSettings changeGameSettings = new ChangeGameSettings
+        var changeGameSettings = new ChangeGameSettingsPacket
         {
             settings = settings,
         };
@@ -158,13 +160,14 @@ public class Client : IClient
         }
         else
         {
+            //TODO: not a writeline
             Console.WriteLine("Only host can change settings");
         }
     }
 
     public void KickPlayer(byte playerId, string reason)
     {
-       KickPlayer kickPlayer = new KickPlayer
+       var kickPlayer = new KickPlayerPacket
        {
            playerId = playerId,
            reason = reason
@@ -179,27 +182,9 @@ public class Client : IClient
        }
     }
 
-    public void CreateGame(string gameName)
-    {
-        CreateGame createGame = new CreateGame
-        {
-            gameName = gameName
-        };
-        SendPackage(createGame);
-    }
-
-    public void DeleteGame(string gameName)
-    {
-        DeleteGame deleteGame = new DeleteGame
-        {
-            gameName = gameName
-        };
-        SendPackage(deleteGame);
-    }
-
     public void StartGame()
     {
-        StartGame startGame = new StartGame();
+        var startGame = new StartGamePacket();
         if (this.isHost)
         {
             SendPackage(startGame);
@@ -223,14 +208,14 @@ public class Client : IClient
         throw new NotImplementedException();
     }
 
-    public virtual async void SendPackage(IPackage package)
+    public virtual async void SendPackage(IPacket package)
     {
         transporter.SendPacket(package);
         // set LastPackageId to package.id
         lastPackage = package;
 
     }
-    public virtual async void ReceivePackage(IPackage package)
+    public virtual async void ReceivePackage(IPacket package)
     {
         Console.WriteLine(package);
     }

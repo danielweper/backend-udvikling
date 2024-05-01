@@ -1,10 +1,10 @@
-namespace Turnbased_Game.Models.Client;
+namespace ClientLogic;
 
 public interface IFighter
 
 {
-    public event Func<string> BattleIsOver; // check
-    public event Func<string> TurnIsOver;
+    public event Action<bool> BattleIsOver; // check
+    public event Action<string> TurnIsOver;
 
     public void SubmitTurn(string turn);
 }

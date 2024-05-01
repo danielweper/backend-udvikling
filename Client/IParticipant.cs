@@ -1,4 +1,4 @@
-using Turnbased_Game.Models;
+using Core.Model;
 
 namespace ClientLogic;
 

@@ -1,4 +1,4 @@
-using Turnbased_Game.Models.Packets;
+using Core.Packets;
 
 namespace ClientLogic;
 
@@ -12,6 +12,6 @@ public interface IClient : /*IChatter,*/ IFighter, IHost
 
     event Action? OnConnected;
 
-    public void SendPackage(IPackage package);
-    public void ReceivePackage(IPackage package);
+    public void SendPackage(IPacket packet);
+    public void ReceivePackage(IPacket packet);
 }
