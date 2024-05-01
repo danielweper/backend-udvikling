@@ -12,19 +12,34 @@ namespace ClientCLI
     internal class CliTransporter : PacketTransport
     {
         private readonly HubConnection _connection;
+        private readonly string _hubUrl = "http://localhost:YOUR_PORT/gameHub";
+
         public CliTransporter() {
             this.PacketReceived += delegate (IPackage p) { lastReceived = p; };
             this.PacketSent += delegate (IPackage p) { lastSent = p; };
             _connection = new HubConnectionBuilder()
-                .WithUrl("http://localhost:YOUR_PORT/gameHub") // Replace with your SignalR server URL
+                .WithUrl(_hubUrl) 
                 .Build();
-
+            _connection.On<IPackage>("SendPackage", package => Console.WriteLine($"Send package with package id: {package.id}"));
+            StartConnectionAsync().Wait();
         }
         public IPackage? lastSent { get; protected set; }
         public IPackage? lastReceived { get; protected set; }
 
         public bool hasSent => (lastSent != null);
         public bool hasReceived => (lastReceived != null);
+        private async Task StartConnectionAsync()
+        {
+            try
+            {
+                await _connection.StartAsync();
+                Console.WriteLine("SignalR connection established.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error establishing SignalR connection: {ex.Message}");
+            }
+        }
         public override async Task<IPackage?> SendPacket(IPackage package)
         {
             await base.SendPacket(package);
