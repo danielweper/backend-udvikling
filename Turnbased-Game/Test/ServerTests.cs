@@ -10,11 +10,11 @@ namespace Turnbased_Game.Test;
 public class ServerTests
 {
     private readonly GameHub _hub;
-    private Mock<IClient> _mockClient;
+    private Mock<IHubClient> _mockClient;
 
     public ServerTests()
     {
-        _mockClient = new Mock<IClient>();
+        _mockClient = new Mock<IHubClient>();
         _hub = new GameHub();
     }
     

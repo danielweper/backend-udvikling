@@ -8,7 +8,7 @@ using Core.Model;
 
 namespace Turnbased_Game.Hubs;
 
-public class GameHub : Hub<IClient>
+public class GameHub : Hub<IHubClient>
 {
     private const GameType DefaultGameType = GameType.RoundRobin;
     private const string DefaultName = "Joe";
@@ -555,7 +555,7 @@ public class GameHub : Hub<IClient>
     }
 
 
-    private async Task SendMessagePacket(string message, MessageType type, IClient caller)
+    private async Task SendMessagePacket(string message, MessageType type, IHubClient caller)
     {
         /*
         switch (type)

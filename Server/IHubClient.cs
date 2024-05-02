@@ -4,7 +4,7 @@ using Core.Packets;
 
 namespace ServerLogic;
 
-public interface IClient
+public interface IHubClient
 {
     public Task ReceiveAcknowledgePacket(AcknowledgedPacket packet);
     Task ReceiveAcceptedPacket(AcceptedPacket packet);
