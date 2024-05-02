@@ -1,8 +1,10 @@
+using Core.Model;
+
 namespace Core.Packets.Server;
 
-public class RoleChangeRequestedPacket : IPacket
+public class RoleChangeRequestedPacket(byte playerId, IRole requestedRole) : IPacket
 {
-    public PacketType type => PacketType.RoleChangeRequested;
-    public int PlayerId { get; set; }
-    // public IRole RequestedRole { get; set;}
+    public PacketType Type => PacketType.RoleChangeRequested;
+    public readonly byte PlayerId = playerId;
+    public readonly IRole RequestedRole = requestedRole;
 }

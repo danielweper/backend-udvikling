@@ -1,8 +1,8 @@
 namespace Core.Packets.Client;
 
-public class SendMessagePacket : IPacket
+public class SendMessagePacket(byte senderId, string message) : IPacket
 {
-    public PacketType type => PacketType.SendMessage;
-    public byte senderId { get; set; }
-    public string message { get; set; }
+    public PacketType Type => PacketType.SendMessage;
+    public readonly byte SenderId = senderId;
+    public readonly string Message = message;
 }

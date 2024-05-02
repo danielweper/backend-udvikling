@@ -1,8 +1,8 @@
 namespace Core.Packets.Server;
 
-public class SystemMessagePacket : IPacket
+public class SystemMessagePacket(byte targetId, string content) : IPacket
 {
-    public PacketType type => PacketType.SystemMessage;
-    public int TargetId { get; set; }
-    public string Content { get; set; }
+    public PacketType Type => PacketType.SystemMessage;
+    public readonly byte TargetId = targetId;
+    public readonly string Content = content;
 }

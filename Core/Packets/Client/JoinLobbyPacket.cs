@@ -1,8 +1,8 @@
 namespace Core.Packets.Client;
 
-public class JoinLobbyPacket : IPacket
+public class JoinLobbyPacket(byte lobbyId) : IPacket
 {
-    public PacketType type => PacketType.JoinLobby;
+    public PacketType Type => PacketType.JoinLobby;
 
-    public byte lobbyId;
+    public readonly byte LobbyId = lobbyId;
 }

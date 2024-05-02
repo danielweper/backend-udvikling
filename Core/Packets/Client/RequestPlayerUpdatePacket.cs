@@ -2,9 +2,9 @@ using Core.Model;
 
 namespace Core.Packets.Client;
 
-public class RequestPlayerUpdatePacket : IPacket
+public class RequestPlayerUpdatePacket(IPlayerProfile newProfile) : IPacket
 {
-    public PacketType type => PacketType.RequestPlayerUpdate;
+    public PacketType Type => PacketType.RequestPlayerUpdate;
 
-    public IPlayerProfile newProfile;
+    public readonly IPlayerProfile NewProfile = newProfile;
 }

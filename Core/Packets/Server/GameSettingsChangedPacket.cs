@@ -2,5 +2,5 @@ namespace Core.Packets.Server;
 
 public class GameSettingsChangedPacket : IPacket
 {
-    public PacketType type => PacketType.GameSettingsChanged;
+    public PacketType Type => PacketType.GameSettingsChanged;
 }

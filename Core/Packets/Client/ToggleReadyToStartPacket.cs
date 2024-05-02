@@ -1,8 +1,8 @@
 namespace Core.Packets.Client;
 
-public class ToggleReadyToStartPacket : IPacket
+public class ToggleReadyToStartPacket(bool newStatus) : IPacket
 {
-    public PacketType type => PacketType.ToggleReadyToStart;
+    public PacketType Type => PacketType.ToggleReadyToStart;
 
-    public bool newStatus;
+    public readonly bool NewStatus = newStatus;
 }

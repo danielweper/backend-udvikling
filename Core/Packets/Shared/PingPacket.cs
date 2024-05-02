@@ -2,5 +2,5 @@ namespace Core.Packets.Shared;
 
 public class PingPacket : IPacket
 {
-    public PacketType type => PacketType.Ping;
+    public PacketType Type => PacketType.Ping;
 }

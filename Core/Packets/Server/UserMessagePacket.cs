@@ -2,5 +2,5 @@ namespace Core.Packets.Server;
 
 public class UserMessagePacket : IPacket
 {
-    public PacketType type => PacketType.UserMessage;
+    public PacketType Type => PacketType.UserMessage;
 }

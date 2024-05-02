@@ -2,9 +2,9 @@ using Core.Model;
 
 namespace Core.Packets.Client;
 
-public class RequestRoleChangePacket : IPacket
+public class RequestRoleChangePacket(IRole newRole) : IPacket
 {
-    public PacketType type => PacketType.RequestRoleChange;
+    public PacketType Type => PacketType.RequestRoleChange;
 
-    public IRole newRole;
+    public readonly IRole NewRole = newRole;
 }
