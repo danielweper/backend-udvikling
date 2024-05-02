@@ -25,11 +25,24 @@ public class GameHub : Hub<IHubClient>
 
     public async Task CreatePlayerProfile(string name, Color color = Color.Red)
     {
+        if (name.Length > 30)
+        {
+            await SendMessagePacket("This name is not Valid, please choose a name that is less than 30 letters",
+                MessageType.Denied, Clients.Caller);
+            return;
+        }
+        if (name.Any(c => !char.IsLetter(c)))
+        {
+            await SendMessagePacket("This name is not Valid, please choose a name that doesn't contains ',' or new line",
+                MessageType.Denied, Clients.Caller);
+            return;
+        }
+        
         PlayerProfile playerProfile = new(color, name, Context.ConnectionId);
         await SendMessagePacket(
             $"You have successfully created a playerProfile with Color: {color.ToString()}, Name: {name}",
             MessageType.Accepted, Clients.Caller);
-        // await Clients.Caller.PlayerProfileCreated(new PlayerProfileCreatedPacket(playerProfile));
+        //await Clients.Caller.PlayerProfileCreated(new PlayerProfileCreatedPacket(playerProfile));
     }
 
     public PlayerProfile DefaultPlayerProfile(string connectionId)
@@ -46,18 +59,18 @@ public class GameHub : Hub<IHubClient>
         playerProfile ??= DefaultPlayerProfile(Context.ConnectionId);
 
         // Create host
-        Player host = new Player(playerProfile.Name, GenerateParticipantId(null), playerProfile);
+        var host = new Player(playerProfile.Name, GenerateParticipantId(null), playerProfile);
 
         // Create lobby
         byte lobbyId = GenerateLobbyId();
-        Lobby lobby = new Lobby(lobbyId, host, maxPlayerCount, lobbyVisibility);
+        var lobby = new Lobby(lobbyId, host, maxPlayerCount, lobbyVisibility);
         _server.AddLobby(lobby);
 
         await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
         await SendMessagePacket("Lobby created", MessageType.Accepted, Clients.Caller);
 
-        LobbyInfo lobbyInfo = lobby.GetInfo();
-        // await Clients.Caller.PlayerJoiningLobby(new LobbyInfoPacket(lobbyInfo));
+        var lobbyInfo = lobby.GetInfo().ToString();
+        await Clients.Caller.PlayerJoiningLobby(new LobbyInfoPacket(lobbyInfo));
     }
 
     public async Task JoinLobby(byte lobbyId, PlayerProfile playerProfile)
