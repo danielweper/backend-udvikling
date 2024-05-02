@@ -14,7 +14,7 @@ public class GameHub : Hub<IHubClient>
     private const GameType DefaultGameType = GameType.RoundRobin;
     private const string DefaultName = "Joe";
 
-    private readonly Server _server = new();
+    
     private readonly Random _random = new();
 
     private List<string> nonPlayerConnections = new();
@@ -78,23 +78,25 @@ public class GameHub : Hub<IHubClient>
         // Create lobby
         byte lobbyId = GenerateLobbyId();
         Lobby lobby = new(lobbyId, host, maxPlayerCount, lobbyVisibility);
-        _server.AddLobby(lobby);
+        Server.AddLobby(lobby);
         await Clients.Caller.LobbyCreated(lobbyId);
         await Clients.Caller.LobbyInfo(lobbyId, host.DisplayName, [host.DisplayName], maxPlayerCount, lobbyVisibility, "INFO");
         await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
         Console.WriteLine($"Someone created a lobby {lobbyId}");
-        Console.WriteLine($"New Lobby Count: {_server._lobbies.Count}");
+        Console.WriteLine($"New Lobby Count: {Server._lobbies.Count}");
     }
 
     public async Task JoinLobby(byte lobbyId, PlayerProfile playerProfile)
     {
+        
+        
         Console.WriteLine($"Someone wants to join the lobby {lobbyId}");
-        Console.WriteLine($"Lobby Count: {_server._lobbies.Count}");
-        foreach (Lobby l in _server._lobbies)
+        Console.WriteLine($"Lobby Count: {Server._lobbies.Count}");
+        foreach (Lobby l in Server._lobbies)
         {
             Console.WriteLine($"[LOBBY] {l.Id}");
         }
-        var lobby = _server.GetLobby(lobbyId);
+        var lobby = Server.GetLobby(lobbyId);
         Console.WriteLine($"Found '{lobby}'");
 
         if (lobby == null)
@@ -135,7 +137,7 @@ public class GameHub : Hub<IHubClient>
 
     public async Task KickPlayerFromLobby(byte playerIdToKick, string reason, byte lobbyId)
     {
-        var lobby = _server.GetLobby(lobbyId);
+        var lobby = Server.GetLobby(lobbyId);
 
         if (lobby == null)
         {
@@ -166,7 +168,7 @@ public class GameHub : Hub<IHubClient>
 
     public async Task LeaveLobby(byte lobbyId, byte playerId)
     {
-        var lobby = _server.GetLobby(lobbyId);
+        var lobby = Server.GetLobby(lobbyId);
 
         if (lobby == null)
         {
@@ -198,7 +200,7 @@ public class GameHub : Hub<IHubClient>
         //Check if player is the last player left in lobby
         if (lobby.IsEmpty)
         {
-            _server.RemoveLobby(lobby);
+            Server.RemoveLobby(lobby);
         }
         else
         {
@@ -216,7 +218,7 @@ public class GameHub : Hub<IHubClient>
             Clients.Caller); // Acknowledged
 
         //Get all the Lobbies from server
-        List<LobbyInfo> lobbiesInfo = _server.GetAvailableLobbies();
+        List<LobbyInfo> lobbiesInfo = Server.GetAvailableLobbies();
 
         // AvailableLobbiesPacket availableLobbiesPacketPacket = new AvailableLobbiesPacket(lobbiesInfo);
 
@@ -229,7 +231,7 @@ public class GameHub : Hub<IHubClient>
         // Acknowledged
         await SendMessagePacket("Received CreateGame request", MessageType.Acknowledged, Clients.Caller);
 
-        var lobby = _server.GetLobby(lobbyId);
+        var lobby = Server.GetLobby(lobbyId);
 
 
         if (lobby != null)
@@ -251,7 +253,7 @@ public class GameHub : Hub<IHubClient>
         // Acknowledged
         await SendMessagePacket("Received Start Game request", MessageType.Acknowledged, Clients.Caller);
 
-        var lobby = _server.GetLobby(lobbyId);
+        var lobby = Server.GetLobby(lobbyId);
 
         var allPlayersReady = lobby != null && lobby.Players.All(p => p.ReadyStatus);
         if (allPlayersReady)
@@ -330,7 +332,7 @@ public class GameHub : Hub<IHubClient>
         // Acknowledged
         await SendMessagePacket("Received leave Game request", MessageType.Acknowledged, Clients.Caller);
 
-        var lobby = _server.GetLobby(lobbyId);
+        var lobby = Server.GetLobby(lobbyId);
 
         if (lobby == null)
         {
@@ -376,7 +378,7 @@ public class GameHub : Hub<IHubClient>
     {
         // Acknowledged
         await SendMessagePacket("Received Start Game request", MessageType.Acknowledged, Clients.Caller);
-        var lobby = _server.GetLobby(lobbyId);
+        var lobby = Server.GetLobby(lobbyId);
         var game = lobby?.Game;
         //Check of a lobby has a game
         if (game != null)
@@ -403,7 +405,7 @@ public class GameHub : Hub<IHubClient>
     {
         // Acknowledged
         await SendMessagePacket("Received ExecuteBattle request", MessageType.Acknowledged, Clients.Caller);
-        var lobby = _server.GetLobby(lobbyId);
+        var lobby = Server.GetLobby(lobbyId);
         var game = lobby?.Game;
         //Check of a lobby has a game
         if (game != null)
@@ -432,7 +434,7 @@ public class GameHub : Hub<IHubClient>
         // Acknowledged
         await SendMessagePacket("Received player is Ready request", MessageType.Acknowledged, Clients.Caller);
 
-        var lobby = _server.GetLobby(lobbyId);
+        var lobby = Server.GetLobby(lobbyId);
 
         if (NoLobbyFound(lobby).Result)
         {
@@ -491,7 +493,7 @@ public class GameHub : Hub<IHubClient>
         await SendMessagePacket($"Request to change player profile from playerId: {participantId}, received",
             MessageType.Acknowledged,
             Clients.Caller);
-        var lobby = _server.GetLobby(lobbyId);
+        var lobby = Server.GetLobby(lobbyId);
 
 
         if (lobby == null)
@@ -523,7 +525,7 @@ public class GameHub : Hub<IHubClient>
     {
         await SendMessagePacket($"Request to change role: {playerId}, received", MessageType.Acknowledged,
             Clients.Caller);
-        var lobby = _server.GetLobby(lobbyId);
+        var lobby = Server.GetLobby(lobbyId);
 
 
         if (lobby == null)
@@ -553,7 +555,7 @@ public class GameHub : Hub<IHubClient>
         do
         {
             lobbyId = (byte)_random.Next(1, 256);
-        } while (!_server.LobbyIdIsFree(lobbyId));
+        } while (!Server.LobbyIdIsFree(lobbyId));
 
         return lobbyId;
     }
