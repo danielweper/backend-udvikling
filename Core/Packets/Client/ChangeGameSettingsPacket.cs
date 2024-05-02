@@ -1,7 +1,7 @@
 namespace Core.Packets.Client;
 
-public class ChangeGameSettingsPacket : IPacket
+public class ChangeGameSettingsPacket(string settings) : IPacket
 {
     public PacketType Type => PacketType.ChangeGameSettings;
-    public string settings { get; set; }
+    public readonly string Settings = settings;
 }
