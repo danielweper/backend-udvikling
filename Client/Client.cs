@@ -1,8 +1,10 @@
 using Core.Model;
 using Core.Packets;
 using Core.Packets.Client;
+using Core.Packets.Server;
 using Core.Packets.Shared;
 using Core.Packets.Transport;
+using ServerLogic;
 
 namespace ClientLogic;
 
@@ -23,13 +25,15 @@ public class Client : IClient
         JoinedLobby += delegate (string s) { currentState |= ClientStates.IsInLobby; };
         LeftLobby += delegate (string s) { currentState &= ~ClientStates.IsInLobby; };
         GameStarting += delegate (ulong u) { currentState |= ClientStates.IsInGame; };
-    }
 
+        ReceivedUserMessage += ReceivedMessage;
+        ReceivedSystemMessage += (string content) => ReceivedMessage?.Invoke(0, content);
+    }
+    
     public event Action? OnConnected;
     public event Action<byte, string>? ReceivedUserMessage;
     public event Action<string>? ReceivedSystemMessage;
     public event Action<byte, string>? ReceivedMessage;
-    public event Action<IPacket>? ReceivedPackage;
     public event Action? BadRequest;
     public event Action<bool>? BattleIsOver;
     public event Action<string>? TurnIsOver;
@@ -43,96 +47,58 @@ public class Client : IClient
     public event Action<byte, IRole>? PlayerChangedRole;
     public event Action<byte, IRole>? RoleChangeRequested;
 
-    public bool isHost => (this.id == 1);
+    public bool IsHost => (this.id == 1);
 
     public void SendMessage(string message)
     {
-        var messagePacket = new SendMessagePacket
-        {
-            senderId = this.id,
-            message = message
-        };
-
-        SendPackage(messagePacket);
+        SendPackage(new SendMessagePacket(this.id, message));
     }
 
     public void SubmitTurn(string turn)
     {
-        var packet = new SubmitTurnPacket
-        {
-            turnInfo = turn
-        };
-
-        SendPackage(packet);
+        SendPackage(new SubmitTurnPacket(turn));
     }
 
     public void ListAvailableLobbies()
     {
-        var packet = new ListAvailableLobbiesPacket();
-        SendPackage(packet);
+        SendPackage(new ListAvailableLobbiesPacket());
     }
 
     public void JoinLobby(byte lobbyId)
     {
-        var packet = new JoinLobbyPacket
-        {
-            lobbyId = lobbyId
-        };
-
-        SendPackage(packet);
+        SendPackage(new JoinLobbyPacket(lobbyId));
     }
 
     public void DisconnectLobby()
     {
-        var packet = new DisconnectLobbyPacket();
-        SendPackage(packet);
+        SendPackage(new DisconnectLobbyPacket());
         currentState = currentState & ~ClientStates.IsInLobby;
     }
 
     public void IsReady()
     {
-        var packet = new ToggleReadyToStartPacket
-        {
-            newStatus = true,
-        };
-
-        SendPackage(packet);
+        SendPackage(new ToggleReadyToStartPacket(true));
     }
 
     public void IsNotReady()
     {
-        var packet = new ToggleReadyToStartPacket
-        {
-            newStatus = false,
-        };
-
-        SendPackage(packet);
+        SendPackage(new ToggleReadyToStartPacket(false));
     }
 
     public void RequestProfileUpdate(IPlayerProfile profile)
     {
-        var packet = new RequestPlayerUpdatePacket
-        {
-            newProfile = profile,
-        };
-
-        SendPackage(packet);
+        SendPackage(new RequestPlayerUpdatePacket(profile));
     }
 
     public void RequestRoleChange(IRole role)
     {
-        var packet = new RequestRoleChangePacket
-        {
-            newRole = role,
-        };
-
-        SendPackage(packet);
+        SendPackage(new RequestRoleChangePacket(role));
     }
 
     public void CreateLobby()
     {
-        var createLobby = new CreateLobbyPacket();
-        SendPackage(createLobby);
+        SendPackage(new CreateLobbyPacket());
+        /*
         ReceivedPackage += (package) =>
         {
             if (package is AcceptedPacket)
@@ -144,58 +110,40 @@ public class Client : IClient
                 Console.WriteLine("Lobby creation faield");
             }
         };
-
-        // TODO: act on the answer as well
-        currentState = currentState | ClientStates.IsInLobby | ClientStates.IsHost;
+        */
     }
     public void ChangeGameSettings(string settings)
     {
-        var changeGameSettings = new ChangeGameSettingsPacket
+        if (!this.IsHost)
         {
-            settings = settings,
-        };
-        if (this.isHost)
-        {
-            SendPackage(changeGameSettings);
+            // TODO: error message?
+            return;
         }
-        else
-        {
-            //TODO: not a writeline
-            Console.WriteLine("Only host can change settings");
-        }
+
+        SendPackage(new ChangeGameSettingsPacket(settings));
     }
 
     public void KickPlayer(byte playerId, string reason)
     {
-       var kickPlayer = new KickPlayerPacket
-       {
-           playerId = playerId,
-           reason = reason
-       };
-       if (this.isHost)
-       { 
-           SendPackage(kickPlayer);
-       }
-       else
-       { 
-           Console.WriteLine("Only host can kick players");
-       }
+        if (!this.IsHost)
+        {
+            // TODO: error message?
+            return;
+        }
+
+        SendPackage(new KickPlayerPacket(playerId, reason));
     }
 
     public void StartGame()
     {
-        var startGame = new StartGamePacket();
-        if (this.isHost)
+        if (!this.IsHost)
         {
-            SendPackage(startGame);
-        }
-        else
-        {
-            Console.WriteLine("Only host can start game");
+            // TODO: error message?
+            return;
         }
 
+        SendPackage(new StartGamePacket());
         // TODO: act on the answer as well
-        currentState |= ClientStates.IsInGame;
     }
 
     public void Accepted(int requestId)
@@ -210,13 +158,86 @@ public class Client : IClient
 
     public virtual async void SendPackage(IPacket package)
     {
-        transporter.SendPacket(package);
-        // set LastPackageId to package.id
+        await transporter.SendPacket(package);
         lastPackage = package;
 
     }
     public virtual async void ReceivePackage(IPacket package)
     {
-        Console.WriteLine(package);
+        switch (package.Type)
+        {
+            case PacketType.Ping:
+                SendPackage(new PingPacket());
+                break;
+            case PacketType.InvalidRequest:
+                BadRequest?.Invoke();
+                break;
+            case PacketType.LobbyCreated:
+                currentState |= ClientStates.IsInLobby | ClientStates.IsHost;
+                break;
+            case PacketType.LobbyInfo:
+                string lobbyInfo = ((LobbyInfoPacket)package).Info;
+                JoinedLobby?.Invoke(lobbyInfo);
+                break;
+            case PacketType.PlayerJoinedLobby:
+                byte joinedId = ((PlayerJoinedLobbyPacket)package).PlayerId;
+                IPlayerProfile joinedProfile = ((PlayerJoinedLobbyPacket)package).Profile;
+                PlayerJoined?.Invoke(joinedId, joinedProfile);
+                break;
+            case PacketType.PlayerLeftLobby:
+                byte leftId = ((PlayerLeftLobbyPacket)package).PlayerId;
+                PlayerLeft?.Invoke(leftId);
+                break;
+            case PacketType.AvailableLobbies:
+                break;
+            case PacketType.GameStarting:
+                GameStarting?.Invoke(0);
+                break;
+            case PacketType.GameSettingsChanged:
+                IGameSettings newSettings = ((GameSettingsChangedPacket)package).NewSettings;
+                GameSettingsChanged?.Invoke(newSettings);
+                break;
+            case PacketType.PlayerChanged:
+                byte profileId = ((PlayerProfileChangedPacket)package).PlayerId;
+                IPlayerProfile newProfile = ((PlayerProfileChangedPacket)package).UpdatedProfile;
+                PlayerChangedProfile?.Invoke(profileId, newProfile);
+                break;
+            case PacketType.RoleChangeRequested:
+                // TODO: give the user a choice?
+                SendPackage(new AcceptedPacket());
+                break;
+            case PacketType.RoleChanged:
+                byte roleId = ((RoleChangedPacket)package).PlayerId;
+                IRole newRole = ((RoleChangedPacket)package).NewRole;
+                PlayerChangedRole?.Invoke(roleId, newRole);
+                break;
+            case PacketType.ExecuteTurn:
+                // TODO: fix
+                TurnIsOver?.Invoke("TODO");
+                break;
+            case PacketType.BattleIsOver:
+                // TODO: react on the content of the packet
+                BattleIsOver?.Invoke(true);
+                break;
+            case PacketType.UserMessage:
+                byte senderId = ((UserMessagePacket)package).SenderId;
+                string userContent = ((UserMessagePacket)package).Content;
+                ReceivedUserMessage?.Invoke(senderId, userContent);
+                break;
+            case PacketType.SystemMessage:
+                string systemContent = ((SystemMessagePacket)package).Content;
+                ReceivedSystemMessage?.Invoke(systemContent);
+                break;
+            case PacketType.RegisterPlayerTurn:
+                break;
+            case PacketType.PlayerReadyStatus:
+                break;
+            case PacketType.PlayerProfileCreated:
+                break;
+            case PacketType.Acknowledged:
+            default:
+                // ignore
+                break;
+        }
     }
 }

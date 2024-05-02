@@ -63,7 +63,7 @@ class CLI
 
     private void HandleLobbyState(Command command, Client client)
     {
-        if (client.isHost)
+        if (client.IsHost)
         {
             HandleHostLobbyState(command, client);
         }
