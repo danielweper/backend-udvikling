@@ -1,23 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Turnbased_Game.Models.Packets;
-using Turnbased_Game.Models.Packets.Transport;
-
+﻿using Core.Packets.Transport;
+using Core.Packets;
 namespace Testing;
 
 internal class TestTransport : PacketTransport
 {
     public TestTransport()
     {
-        this.PacketReceived += delegate (IPackage p) { lastReceived = p; };
-        this.PacketSent += delegate (IPackage p) { lastSent = p; };
+        this.PacketReceived += delegate (IPacket p) { lastReceived = p; };
+        this.PacketSent += delegate (IPacket p) { lastSent = p; };
     }
 
-    public IPackage? lastSent { get; protected set; }
-    public IPackage? lastReceived { get; protected set; }
+    public IPacket? lastSent { get; protected set; }
+    public IPacket? lastReceived { get; protected set; }
 
     public bool hasSent => (lastSent != null);
     public bool hasReceived => (lastReceived != null);
