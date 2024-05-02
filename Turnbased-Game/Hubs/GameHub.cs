@@ -54,7 +54,7 @@ public class GameHub : Hub<IHubClient>
             return;
         }
         
-        PlayerProfile playerProfile = new(color, name, Context.ConnectionId);
+        PlayerProfile playerProfile = new(color, name);
         await SendMessagePacket(
             $"You have successfully created a playerProfile with Color: {color.ToString()}, Name: {name}",
             MessageType.Accepted, Clients.Caller);
