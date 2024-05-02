@@ -22,7 +22,7 @@ public class ServerTests
     public void Test_RemoveAndAddLobby()
     {
         // Arrange
-        var server = new Server();
+        // var Server = new Server();
         
         var playerProfile = new PlayerProfile(Color.Red, "Cossai");
         var host = new Player("Cossai", 0, playerProfile);
@@ -30,27 +30,27 @@ public class ServerTests
         var lobby = new Lobby( 1, host, 9, LobbyVisibility.Public);
         
         //Test_AddLobby
-        server.AddLobby(lobby);
+        Server.AddLobby(lobby);
         
         //Check if lobby is added 
-        Assert.Contains(server.GetAvailableLobbies(), lobbyInfo => lobbyInfo.id == lobby.Id);
-        Assert.False(server.LobbyIdIsFree(lobby.Id));
+        Assert.Contains(Server.GetAvailableLobbies(), lobbyInfo => lobbyInfo.id == lobby.Id);
+        Assert.False(Server.LobbyIdIsFree(lobby.Id));
         //Check if host is added as lobby host
         Assert.True(lobby.Host == host);
         
         // Act
-        server.RemoveLobby(lobby);
+        Server.RemoveLobby(lobby);
         
         // Assert
-        Assert.DoesNotContain(server.GetAvailableLobbies(), lobbyInfo => lobbyInfo.id == lobby.Id);
-        Assert.True(server.LobbyIdIsFree(lobby.Id));
+        Assert.DoesNotContain(Server.GetAvailableLobbies(), lobbyInfo => lobbyInfo.id == lobby.Id);
+        Assert.True(Server.LobbyIdIsFree(lobby.Id));
     }
 
     [Fact]
     public void Test_GetAvailableLobbies()
     {
         // Arrange
-        var server = new Server();
+        // var Server = new Server();
         
         var playerProfile = new PlayerProfile(Color.Red, "Cossai");
         var host = new Player("Cossai",0,playerProfile);
@@ -58,10 +58,10 @@ public class ServerTests
         var lobby = new Lobby( 1, host, 9, LobbyVisibility.Private);
         
         // Act
-        server.AddLobby(lobby);
+        Server.AddLobby(lobby);
         
         //Assert
-        Assert.DoesNotContain(server.GetAvailableLobbies(), lobbyInfo => lobbyInfo.id == lobby.Id);
-        Assert.False(server.LobbyIdIsFree(lobby.Id));
+        Assert.DoesNotContain(Server.GetAvailableLobbies(), lobbyInfo => lobbyInfo.id == lobby.Id);
+        Assert.False(Server.LobbyIdIsFree(lobby.Id));
     }
 }

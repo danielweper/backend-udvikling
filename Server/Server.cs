@@ -1,34 +1,35 @@
 namespace ServerLogic;
 
-public class Server
+public static class Server
 {
-    public List<Lobby> _lobbies;
-    public IReadOnlyList<Lobby> Lobbies => _lobbies.AsReadOnly();
+    
+    public static List<Lobby> _lobbies = new List<Lobby>();
+    public static IReadOnlyList<Lobby> Lobbies => _lobbies.AsReadOnly();
 
-    public Server()
+    /*public Server()
     {
         _lobbies = new();
-    }
+    }*/
 
-    public void AddLobby(Lobby lobby)
+    public static void AddLobby(Lobby lobby)
     {
         _lobbies.Add(lobby);
     }
-    public void RemoveLobby(Lobby lobby)
+    public static void RemoveLobby(Lobby lobby)
     {
         _lobbies.Remove(lobby);
     }
 
-    public Lobby? GetLobby(byte requestId) => _lobbies.FirstOrDefault((Lobby l) => l.Id == requestId);
+    public static Lobby? GetLobby(byte requestId) => _lobbies.FirstOrDefault((Lobby l) => l.Id == requestId);
 
-    public LobbyInfo? GetLobbyInfo(byte lobbyId) => GetLobby(lobbyId)?.GetInfo();
+    public static LobbyInfo? GetLobbyInfo(byte lobbyId) => GetLobby(lobbyId)?.GetInfo();
 
-    public bool LobbyIdIsFree(byte lobbyId)
+    public static bool LobbyIdIsFree(byte lobbyId)
     {
         return _lobbies.All(lobby => lobby.Id != lobbyId);
     }
 
-    public List<LobbyInfo> GetAvailableLobbies()
+    public static List<LobbyInfo> GetAvailableLobbies()
     {
         return (from lobby in _lobbies where lobby.PlayerCount != lobby.MaxPlayerCount && lobby.Visibility == LobbyVisibility.Public select lobby.GetInfo()).ToList();
     }
