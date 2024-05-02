@@ -1,14 +1,9 @@
-
 using Moq;
 using Turnbased_Game.Hubs;
-using Turnbased_Game.Models;
-using Core.Packets.Server;
-using Core.Packets.Shared;
-using Server;
+using Core.Model;
+using ServerLogic;
 using Core.Model;
 using Xunit;
-using ServerLogic.Dummy;
-using ServerLogic;
 
 namespace Turnbased_Game.Test;
 
@@ -29,8 +24,8 @@ public class ServerTests
         // Arrange
         var server = new Server();
         
-        var playerProfile = new PlayerProfile(Red, "Cossai", "1");
-        var host = new Player("Cossai",0,playerProfile);
+        var playerProfile = new PlayerProfile(Color.Red, "Cossai", "1");
+        var host = new Player("Cossai", 0, playerProfile);
         
         var lobby = new Lobby( 1, host, 9, LobbyVisibility.Public);
         
@@ -57,7 +52,7 @@ public class ServerTests
         // Arrange
         var server = new Server();
         
-        var playerProfile = new PlayerProfile(Red, "Cossai", "1");
+        var playerProfile = new PlayerProfile(Color.Red, "Cossai", "1");
         var host = new Player("Cossai",0,playerProfile);
         
         var lobby = new Lobby( 1, host, 9, LobbyVisibility.Private);
