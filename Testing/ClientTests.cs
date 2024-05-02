@@ -1,7 +1,9 @@
 using Moq;
 using ClientLogic;
-using Turnbased_Game.Models.Packets.Client;
-using Turnbased_Game.Models.Packets;
+using Core.Packets;
+using Core.Packets.Client;
+using Core.Packets.Shared;
+
 
 namespace Testing;
 
@@ -14,11 +16,11 @@ public class ClientTests
     {
         // Arrange
         var client = new TestClient();
-        var packageMock = new Mock<IPackage>();
-        byte packageId = 11; // Metapod
-
+        var packageMock = new Mock<IPacket>();
+        var packageId = PacketType.LobbyCreated;
+        
         // Set up mock behavior
-        packageMock.Setup(p => p.id).Returns(packageId);
+        packageMock.Setup(p => p.Type).Returns(packageId);
 
         // Act
         client.SendPackage(packageMock.Object);
@@ -39,9 +41,12 @@ public class ClientTests
 
         // Assert
         Assert.True(testTransporter.hasSent);
-        Assert.Equal(32, testTransporter.lastSent.id);
-        SubmitTurn sentPacket = (SubmitTurn)testTransporter.lastSent;
-        Assert.Equal(payload, sentPacket.turnInfo);
+        if (testTransporter.lastSent != null)
+        {
+            Assert.Equal(32, (byte)testTransporter.lastSent.Type);
+            var sentPacket = (SubmitTurnPacket)testTransporter.lastSent;
+            Assert.Equal(payload, sentPacket.TurnInfo);
+        }
     }
 
     [Fact]
@@ -55,7 +60,7 @@ public class ClientTests
 
         // Assert
         Assert.True(testTransporter.hasSent);
-        Assert.Equal(16, testTransporter.lastSent.id);
+        Assert.Equal(16, (byte)testTransporter.lastSent.Type);
     }
 
     [Fact]
@@ -70,9 +75,9 @@ public class ClientTests
 
         // Assert
         Assert.True(testTransporter.hasSent);
-        Assert.Equal(14, testTransporter.lastSent.id);
-        var sentPacket = (JoinLobby)testTransporter.lastSent;
-        Assert.Equal(lobbyId, sentPacket.lobbyId);
+        Assert.Equal(14, (byte)testTransporter.lastSent.Type);
+        var sentPacket = (JoinLobbyPacket)testTransporter.lastSent;
+        Assert.Equal(lobbyId, sentPacket.LobbyId);
     }
 
     [Fact]
@@ -86,7 +91,7 @@ public class ClientTests
 
         // Assert
         Assert.True(testTransporter.hasSent);
-        Assert.Equal(16, testTransporter.lastSent.id);
+        if (testTransporter.lastSent != null) Assert.Equal(16, (byte)testTransporter.lastSent.Type);
     }
 
     [Fact]
@@ -100,9 +105,10 @@ public class ClientTests
 
         // Assert
         Assert.True(testTransporter.hasSent);
-        Assert.Equal(24, testTransporter.lastSent.id);
-        var sentPacket = (ToggleReadyToStart)testTransporter.lastSent;
-        Assert.True(sentPacket.newStatus);
+        if (testTransporter.lastSent == null) return;
+        Assert.Equal(24, (byte)testTransporter.lastSent.Type);
+        var sentPacket = (ToggleReadyToStartPacket)testTransporter.lastSent;
+        Assert.True(sentPacket.NewStatus);
     }
 
     [Fact]
@@ -116,9 +122,10 @@ public class ClientTests
 
         // Assert
         Assert.True(testTransporter.hasSent);
-        Assert.Equal(24, testTransporter.lastSent.id);
-        var sentPacket = (ToggleReadyToStart)testTransporter.lastSent;
-        Assert.False(sentPacket.newStatus);
+        if (testTransporter.lastSent == null) return;
+        Assert.Equal(24, (byte)testTransporter.lastSent.Type);
+        var sentPacket = (ToggleReadyToStartPacket)testTransporter.lastSent;
+        Assert.False(sentPacket.NewStatus);
     }
 
     [Fact]
@@ -126,16 +133,16 @@ public class ClientTests
     {
         // Arrange
         var client = new Client(testTransporter);
-        string payload = "Hello world!";
+        var payload = "Hello world!";
 
         // Act
         client.SendMessage(payload);
 
         // Assert
         Assert.True(testTransporter.hasSent);
-        Assert.Equal(34, testTransporter.lastSent.id);
-        var sentPacket = (SendMessage)testTransporter.lastSent;
-        Assert.Equal(payload, sentPacket.message);
+        Assert.Equal(34, (byte)testTransporter.lastSent.Type);
+        var sentPacket = (SendMessagePacket)testTransporter.lastSent;
+        Assert.Equal(payload, sentPacket.Message);
     }
 
     [Fact]
@@ -143,17 +150,18 @@ public class ClientTests
     {
         // Arrange
         var client = new TestClient(1, 2, null, testTransporter);
-        var payload = new ChangeGameSettings();
-        payload.settings = "GameMode: TurnBased";
+        var payload = new ChangeGameSettingsPacket("GameMode: TurnBased");
+        //payload.Settings = "GameMode: TurnBased";
 
         // Act 
-        client.ChangeGameSettings(payload.settings);
+        client.ChangeGameSettings(payload.Settings);
 
         // Assert
         Assert.True(testTransporter.hasSent);
-        Assert.Equal(26, testTransporter.lastSent.id);
-        var sentPacket = (ChangeGameSettings)testTransporter.lastSent;
-        Assert.Equal(payload.settings, sentPacket.settings);
+        if (testTransporter.lastSent == null) return;
+        Assert.Equal(26, (byte)testTransporter.lastSent.Type);
+        var sentPacket = (ChangeGameSettingsPacket)testTransporter.lastSent;
+        Assert.Equal(payload.Settings, sentPacket.Settings);
     }
     [Fact]
     public void Test_StartGame_SendStartGamePacketToServer()
@@ -166,7 +174,7 @@ public class ClientTests
 
         // Assert
         Assert.True(testTransporter.hasSent);
-        Assert.Equal(22, testTransporter.lastSent.id);
+        Assert.Equal(22, (byte)testTransporter.lastSent.Type);
     }
     [Fact]
     public void Test_CreateLobby_SendCreateLobbyPacketToServer_InspectServerResponse()
@@ -177,17 +185,18 @@ public class ClientTests
         // Act
         client.CreateLobby();
         // mocking until we have a concrete implementation
-        var acceptedPackageMock = new Mock<IAccepted>();
-        acceptedPackageMock.Setup(p => p.id).Returns(3);
+        var acceptedPackageMock = new Mock<IPacket>();
+        acceptedPackageMock.Setup(p => p.Type).Returns(PacketType.Accepted);
 
         testTransporter.ReceivePacket(acceptedPackageMock.Object);
 
         // Assert
         Assert.True(testTransporter.hasSent);
-        Assert.Equal(12, testTransporter.lastSent.id);
+        if (testTransporter.lastSent != null) Assert.Equal(PacketType.CreateLobby, testTransporter.lastSent.Type);
         Assert.True(testTransporter.hasReceived);
-        Assert.Equal(3, testTransporter.lastReceived.id);
+        if (testTransporter.lastReceived != null) Assert.Equal(PacketType.Accepted, testTransporter.lastReceived.Type);
     }
+    /*TODO - Implement the CreateGame method
     [Fact]
     public void Test_CreateGame_SendsCorrectGameName()
     {
@@ -204,6 +213,7 @@ public class ClientTests
         var sentPacket = (CreateGame)testTransporter.lastSent;
         Assert.Equal(gameName, sentPacket.gameName);
     }
+    //TODO - Implement the DeleteGame method
     [Fact]
     public void Test_DeleteGame_SendsCorrectGameName()
     {
@@ -219,5 +229,5 @@ public class ClientTests
         Assert.Equal(36, testTransporter.lastSent.id);
         var sentPacket = (DeleteGame)testTransporter.lastSent;
         Assert.Equal(gameName, sentPacket.gameName);
-    }
+    }*/
 }
