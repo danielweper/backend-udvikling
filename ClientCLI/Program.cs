@@ -5,18 +5,13 @@ using Microsoft.AspNetCore.SignalR.Client;
 using System;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
+using Core.Packets.Transport;
 
-using Turnbased_Game.Models.Packets.Transport;
 class Program
 {
     static void Main(string[] args)
     {
         CLI cli = new CLI();
         cli.Run();
-    }
-  
-    static void ShowOption(Command option)
-    {
-        Console.WriteLine($"Press '{(char)option}' to {option}");
     }
 }

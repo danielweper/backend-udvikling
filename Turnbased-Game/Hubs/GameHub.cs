@@ -5,6 +5,7 @@ using Core.Packets.Shared;
 using ServerLogic;
 using ServerLogic.Model.Fighting;
 using Core.Model;
+using Core.Packets;
 
 namespace Turnbased_Game.Hubs;
 
@@ -16,16 +17,31 @@ public class GameHub : Hub<IHubClient>
     private readonly Server _server = new();
     private readonly Random _random = new();
 
+    private List<string> nonPlayerConnections = new();
+    private List<(string, Player)> playerConnections = new();
 
     public override async Task OnConnectedAsync()
     {
-        await SendMessagePacket("You have successfully joined the lobby", MessageType.Acknowledged, Clients.Caller);
+        nonPlayerConnections.Add(Context.ConnectionId);
     }
 
+    public override Task OnDisconnectedAsync(Exception? exception)
+    {
+        if (nonPlayerConnections.Contains(Context.ConnectionId))
+        {
+            nonPlayerConnections.Remove(Context.ConnectionId);
+        }
+        else
+        {
+            playerConnections.RemoveAll(((string, Player) pair) => pair.Item1 == Context.ConnectionId);
+            // TODO: remove from lobby and inform the other players
+        }
+        return base.OnDisconnectedAsync(exception);
+    }
 
     public async Task CreatePlayerProfile(string name, Color color = Color.Red)
     {
-        PlayerProfile playerProfile = new(color, name, Context.ConnectionId);
+        PlayerProfile playerProfile = new(color, name);
         await SendMessagePacket(
             $"You have successfully created a playerProfile with Color: {color.ToString()}, Name: {name}",
             MessageType.Accepted, Clients.Caller);
@@ -34,15 +50,13 @@ public class GameHub : Hub<IHubClient>
 
     public PlayerProfile DefaultPlayerProfile(string connectionId)
     {
-        return new PlayerProfile(Color.Red, DefaultName, connectionId);
+        return new PlayerProfile(Color.Red, DefaultName);
     }
 
     public async Task CreateLobby(int maxPlayerCount, LobbyVisibility lobbyVisibility,
         PlayerProfile? playerProfile = null)
     {
-        await SendMessagePacket("Received CreateLobby request", MessageType.Acknowledged,
-            Clients.Caller); // Acknowledged
-
+        Console.WriteLine("Someone wants to create a lobby");
         playerProfile ??= DefaultPlayerProfile(Context.ConnectionId);
 
         // Create host
@@ -50,43 +64,46 @@ public class GameHub : Hub<IHubClient>
 
         // Create lobby
         byte lobbyId = GenerateLobbyId();
-        Lobby lobby = new Lobby(lobbyId, host, maxPlayerCount, lobbyVisibility);
+        Lobby lobby = new(lobbyId, host, maxPlayerCount, lobbyVisibility);
         _server.AddLobby(lobby);
-
+        await Clients.Caller.LobbyCreated(lobbyId);
+        await Clients.Caller.LobbyInfo(lobbyId, host.DisplayName, [host.DisplayName], maxPlayerCount, lobbyVisibility, "INFO");
         await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
-        await SendMessagePacket("Lobby created", MessageType.Accepted, Clients.Caller);
-
-        LobbyInfo lobbyInfo = lobby.GetInfo();
-        // await Clients.Caller.PlayerJoiningLobby(new LobbyInfoPacket(lobbyInfo));
+        Console.WriteLine($"Someone created a lobby {lobbyId}");
+        Console.WriteLine($"New Lobby Count: {_server._lobbies.Count}");
     }
 
     public async Task JoinLobby(byte lobbyId, PlayerProfile playerProfile)
     {
+        Console.WriteLine($"Someone wants to join the lobby {lobbyId}");
+        Console.WriteLine($"Lobby Count: {_server._lobbies.Count}");
+        foreach (Lobby l in _server._lobbies)
+        {
+            Console.WriteLine($"[LOBBY] {l.Id}");
+        }
         var lobby = _server.GetLobby(lobbyId);
+        Console.WriteLine($"Found '{lobby}'");
 
         if (lobby == null)
         {
-            await SendMessagePacket(caller: Clients.Caller, message: "No lobby found with corresponding id",
-                type: MessageType.Denied);
+            await Clients.Caller.InvalidRequest((byte)PacketType.JoinLobby, "No lobby found with corresponding id");
+            return;
+        }
+        else if (lobby.IsFull)
+        {
+            await Clients.Caller.Denied((byte)PacketType.JoinLobby);
             return;
         }
 
         HashSet<string> playerNames = lobby.Players.Select(pl => pl.DisplayName).ToHashSet();
-
         string displayName = GetDisplayName(playerProfile.Name, playerNames);
-
         Player player = new Player(displayName, GenerateParticipantId(lobby), playerProfile);
 
         lobby.AddPlayer(player);
-        await SendMessagePacket(message: $"You have successfully joined lobby: {lobbyId}", type: MessageType.Accepted,
-            caller: Clients.Caller);
-        // LobbyInfoPacket packet = new LobbyInfoPacket(lobby.GetInfo());
-        // await Clients.Caller.PlayerJoiningLobby(packet);
-
-        // TODO: make actual player profile
-        // await Clients.Group($"{lobbyId}")
-        //     .PlayerHasJoined(new PlayerJoinedLobbyPacket(playerId: player.ParticipantId, displayName, playerProfile));
+        await Clients.Caller.LobbyInfo(lobbyId, lobby.Host.DisplayName, lobby.Players.Select(p => p.DisplayName).ToArray(), lobby.MaxPlayerCount, lobby.Visibility, "info ;)");
+        await Clients.Group($"{lobbyId}").PlayerJoinedLobby(player.ParticipantId, "profile");
         await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
+        Console.WriteLine($"{player.DisplayName} joined the lobby '{lobbyId}'");
     }
 
     private string GetDisplayName(string originalName, HashSet<string> playerNames)
@@ -146,38 +163,38 @@ public class GameHub : Hub<IHubClient>
         }
 
         Player? player = lobby.Players.FirstOrDefault((Player p) => p.ParticipantId == playerId);
-
-        if (player != null)
-        {
-            //Remove Player
-            lobby.RemovePlayer(player);
-
-            //Check if player is the last player left in lobby
-            if (lobby.PlayerCount == 0)
-            {
-                _server.RemoveLobby(lobby);
-                await SendMessagePacket(caller: Clients.Caller, message: "The lobby has been deleted",
-                    type: MessageType.Accepted);
-            }
-            else
-            {
-                // Removes player from group
-                await Groups.RemoveFromGroupAsync(player.Profile.ConnectionId, $"{lobbyId}");
-
-                //Send packet that a player left
-                // await Clients.Group($"{lobbyId}").PlayerHasLeft(new PlayerLeftLobbyPacket(player.ParticipantId));
-            }
-
-            //Send packet to the player, that they have disconnect the lobby
-            await SendMessagePacket(message: $"You have successfully disconnected from the lobby: {lobbyId}",
-                type: MessageType.Accepted,
-                caller: Clients.Caller);
-        }
-        else
+        if (player == null)
         {
             await SendMessagePacket(caller: Clients.Caller, message: "You are not in this lobby",
                 type: MessageType.Denied);
+            return;
         }
+
+        //Remove Player
+        lobby.RemovePlayer(player);
+
+        // Finds the connection id for the specified player
+        (string, Player) connectionInfo = playerConnections.First(((string, Player) pair) => pair.Item2 == player);
+        string connectionId = connectionInfo.Item1;
+        playerConnections.Remove(connectionInfo);
+        nonPlayerConnections.Add(connectionId);
+
+        // Removes player from SignalR group
+        await Groups.RemoveFromGroupAsync(connectionId, $"{lobbyId}");
+
+        //Check if player is the last player left in lobby
+        if (lobby.IsEmpty)
+        {
+            _server.RemoveLobby(lobby);
+        }
+        else
+        {
+            //Send packet that a player left
+            await Clients.Group($"{lobbyId}").PlayerLeftLobby(playerId);
+        }
+
+        //Send packet to the player, that they have disconnect the lobby
+        await Clients.Caller.Acknowledged(); // maybe accepted?
     }
 
     public async Task ViewAvailableLobbies()
@@ -536,7 +553,7 @@ public class GameHub : Hub<IHubClient>
         do
         {
             participantId = (byte)_random.Next(1, 256);
-        } while (!usedIds.Contains(participantId));
+        } while (usedIds.Contains(participantId));
 
         return participantId;
     }

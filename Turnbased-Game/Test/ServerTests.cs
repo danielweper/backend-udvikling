@@ -24,7 +24,7 @@ public class ServerTests
         // Arrange
         var server = new Server();
         
-        var playerProfile = new PlayerProfile(Color.Red, "Cossai", "1");
+        var playerProfile = new PlayerProfile(Color.Red, "Cossai");
         var host = new Player("Cossai", 0, playerProfile);
         
         var lobby = new Lobby( 1, host, 9, LobbyVisibility.Public);
@@ -52,7 +52,7 @@ public class ServerTests
         // Arrange
         var server = new Server();
         
-        var playerProfile = new PlayerProfile(Color.Red, "Cossai", "1");
+        var playerProfile = new PlayerProfile(Color.Red, "Cossai");
         var host = new Player("Cossai",0,playerProfile);
         
         var lobby = new Lobby( 1, host, 9, LobbyVisibility.Private);

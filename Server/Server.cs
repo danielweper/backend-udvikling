@@ -2,7 +2,8 @@ namespace ServerLogic;
 
 public class Server
 {
-    private readonly List<Lobby> _lobbies;
+    public List<Lobby> _lobbies;
+    public IReadOnlyList<Lobby> Lobbies => _lobbies.AsReadOnly();
 
     public Server()
     {
@@ -18,18 +19,7 @@ public class Server
         _lobbies.Remove(lobby);
     }
 
-    public Lobby? GetLobby(byte requestId)
-    {
-        for (int i = 0; i < _lobbies.Count; i++)
-        {
-            if (_lobbies[i].Id == requestId)
-            {
-                return _lobbies[i];
-            }
-        }
-
-        return null;
-    }
+    public Lobby? GetLobby(byte requestId) => _lobbies.FirstOrDefault((Lobby l) => l.Id == requestId);
 
     public LobbyInfo? GetLobbyInfo(byte lobbyId) => GetLobby(lobbyId)?.GetInfo();
 

@@ -12,25 +12,30 @@ public class Client : IClient
 {
     public byte id { get; protected set; }
     public byte lobbyId { get; protected set; }
-    public ClientStates currentState { get; protected set; }
+    public ClientStates CurrentState { get; protected set; }
+    public PacketTransport Transporter { get; init; }
     protected IPacket? lastPackage = null;
-    protected PacketTransport transporter;
 
     public Client(PacketTransport transporter)
     {
-        this.transporter = transporter;
-        this.transporter.PacketReceived += ReceivePackage;
+        Transporter = transporter;
+        Transporter.PacketReceived += ReceivePackage;
+        Transporter.OnConnected += delegate () { CurrentState |= ClientStates.IsConnected; };
+        Transporter.OnDisconnected += delegate () { CurrentState &= ~ClientStates.IsConnected; };
 
-        OnConnected += delegate () { currentState |= ClientStates.IsConnected; };
-        JoinedLobby += delegate (string s) { currentState |= ClientStates.IsInLobby; };
-        LeftLobby += delegate (string s) { currentState &= ~ClientStates.IsInLobby; };
-        GameStarting += delegate (ulong u) { currentState |= ClientStates.IsInGame; };
+        JoinedLobby += delegate (string s) { CurrentState |= ClientStates.IsInLobby; };
+        LeftLobby += delegate (string s) { CurrentState &= ~ClientStates.IsInLobby; };
+        GameStarting += delegate (ulong u) { CurrentState |= ClientStates.IsInGame; };
 
         ReceivedUserMessage += ReceivedMessage;
         ReceivedSystemMessage += (string content) => ReceivedMessage?.Invoke(0, content);
+
+        if (Transporter.IsConnected)
+        {
+            CurrentState |= ClientStates.IsConnected;
+        }
     }
     
-    public event Action? OnConnected;
     public event Action<byte, string>? ReceivedUserMessage;
     public event Action<string>? ReceivedSystemMessage;
     public event Action<byte, string>? ReceivedMessage;
@@ -72,7 +77,7 @@ public class Client : IClient
     public void DisconnectLobby()
     {
         SendPackage(new DisconnectLobbyPacket());
-        currentState = currentState & ~ClientStates.IsInLobby;
+        CurrentState = CurrentState & ~ClientStates.IsInLobby;
     }
 
     public void IsReady()
@@ -158,7 +163,7 @@ public class Client : IClient
 
     public virtual async void SendPackage(IPacket package)
     {
-        await transporter.SendPacket(package);
+        await Transporter.SendPacket(package);
         lastPackage = package;
 
     }
@@ -173,7 +178,7 @@ public class Client : IClient
                 BadRequest?.Invoke();
                 break;
             case PacketType.LobbyCreated:
-                currentState |= ClientStates.IsInLobby | ClientStates.IsHost;
+                CurrentState |= ClientStates.IsInLobby | ClientStates.IsHost;
                 break;
             case PacketType.LobbyInfo:
                 string lobbyInfo = ((LobbyInfoPacket)package).Info;
@@ -204,7 +209,7 @@ public class Client : IClient
                 break;
             case PacketType.RoleChangeRequested:
                 // TODO: give the user a choice?
-                SendPackage(new AcceptedPacket());
+                SendPackage(new AcceptedPacket((byte)PacketType.RoleChangeRequested));
                 break;
             case PacketType.RoleChanged:
                 byte roleId = ((RoleChangedPacket)package).PlayerId;

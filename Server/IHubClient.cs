@@ -28,4 +28,27 @@ public interface IHubClient
     public Task ExecuteRound(ExecuteTurnPacket packet);
 
     public Task ReceivePacket(IPacket packet);
+
+    // Corresponding 1:1 to the actual packets
+    // Shared
+    public Task Ping();
+    public Task Acknowledged();
+    public Task Accepted(byte requestId);
+    public Task Denied(byte requestId);
+    public Task InvalidRequest(byte requestId, string errorMessage);
+    // Server to client
+    public Task LobbyCreated(byte lobbyId);
+    public Task LobbyInfo(byte lobbyId, string host, string[] players, int maxPlayerCount, LobbyVisibility visibility, string gameInfo);
+    public Task PlayerJoinedLobby(byte playerId, string profile);
+    public Task PlayerLeftLobby(byte playerId);
+    public Task AvailableLobbies(int amount);
+    public Task GameStarting(ulong startTime);
+    // public Task GameSettingsChanged();
+    // public Task PlayerProfileChanged();
+    public Task RoleChangeRequested(byte playerId, string requestedRole);
+    public Task RoleChanged(byte playerId, string newRole);
+    public Task ExecuteTurn(string turnInfo);
+    public Task BattleIsOver(); // TODO: send the winner?
+    public Task UserMessage(byte senderId, string content);
+    public Task SystemMessage(string content);
 }

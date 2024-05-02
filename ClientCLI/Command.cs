@@ -8,6 +8,7 @@ namespace ClientCLI;
 
 public enum Command : ushort
 {
+    ShowHelp = 'h',
     DisplayLobbies = 'l',
     JoinLobby = 'j',
     CreateLobby = 'c',

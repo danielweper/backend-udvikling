@@ -5,6 +5,8 @@ public class Lobby : ILobby
     public byte Id { get; }
     public int MaxPlayerCount { get; private set; }
     public int PlayerCount => _players.Count;
+    public bool IsFull => (PlayerCount >= MaxPlayerCount);
+    public bool IsEmpty => (PlayerCount == 0);
     public Player Host => _players[0];
     public IReadOnlyList<Player> Players => _players.AsReadOnly();
     public LobbyVisibility Visibility { get; private set; }

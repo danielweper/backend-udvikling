@@ -1,7 +1,8 @@
-using System.Runtime.InteropServices;
+using ClientLogic;
+using Core.Packets;
+using Core.Packets.Shared;
 
 namespace ClientCLI;
-using ClientLogic;
 
 class CLI
 {
@@ -9,33 +10,135 @@ class CLI
     {
         CliTransporter transporter = new CliTransporter();
         Client client = new Client(transporter);
-        var currentState = client.currentState;
+
+        transporter.PacketSent += (IPacket packet) =>
+        {
+            var prevColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            Console.WriteLine($"[OUTGOING] {packet}");
+            Console.ForegroundColor = prevColor;
+        };
+        transporter.PacketReceived += (IPacket packet) =>
+        {
+            var prevColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"[INCOMING] {packet}");
+            if (packet.Type == PacketType.InvalidRequest)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"{((InvalidRequestPacket)packet).ErrorMessage}");
+            }
+            Console.ForegroundColor = prevColor;
+        };
+
+        client.ReceivedUserMessage += (byte senderId, string content) =>
+        {
+            var prevColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine($"[{senderId}] {content}");
+            Console.ForegroundColor = prevColor;
+        };
+
+        client.JoinedLobby += (string info) =>
+        {
+            var prevColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"Joined Lobby! ({info})");
+            Console.ForegroundColor = prevColor;
+        };
+
         while (true)
         {
-            currentState = client.currentState;
-            Console.WriteLine($"Current state: {currentState}");
+            Console.WriteLine($"Current state: {client.CurrentState}");
             Console.Write("Enter command: ");
-            var key = Console.ReadKey(true);
+            var key = Console.ReadKey(false);
+            Console.WriteLine();
+            if (key.Key == ConsoleKey.Escape)
+            {
+                break;
+            }
             HandleCommand((Command)key.KeyChar, client);
         }
     }
 
     private void HandleCommand(Command command, Client client)
     {
-        switch (client.currentState)
+        List<Command> acceptableCommands = [Command.ShowHelp];
+
+        ClientStates state = client.CurrentState;
+        if (state.HasFlag(ClientStates.IsConnected))
         {
-            case ClientStates.IsConnected:
-                HandleConnectedState(command, client);
-                break;
-            case ClientStates.IsInLobby:
-                HandleLobbyState(command, client);
-                break;
-            case ClientStates.IsFighter:
-                HandleFightState(command, client);
-                break;
-            default:
-                Console.WriteLine("Invalid state");
-                break;
+            if (state.HasFlag(ClientStates.IsInLobby))
+            {
+                acceptableCommands.Add(Command.DisconnectLobby);
+                acceptableCommands.Add(Command.IsReady);
+                acceptableCommands.Add(Command.IsNotReady);
+
+                if (state.HasFlag(ClientStates.IsHost))
+                {
+                    acceptableCommands.Add(Command.KickPlayer);
+                    acceptableCommands.Add(Command.StartGame);
+                    acceptableCommands.Add(Command.ChangeGameSettings);
+                }
+
+                acceptableCommands.Add(Command.RequestPlayerUpdate);
+                acceptableCommands.Add(Command.RequestRoleChange);
+                acceptableCommands.Add(Command.SendMessage);
+
+                if (state.HasFlag(ClientStates.IsFighter) && state.HasFlag(ClientStates.IsInGame))
+                {
+                    acceptableCommands.Add(Command.SubmitTurn);
+                }
+            }
+            else
+            {
+                acceptableCommands.Add(Command.DisplayLobbies);
+                acceptableCommands.Add(Command.JoinLobby);
+                acceptableCommands.Add(Command.CreateLobby);
+            }
+        }
+
+        if (acceptableCommands.Contains(command)) {
+            switch (command)
+            {
+                case Command.ShowHelp:
+                    Console.WriteLine("Usable commands:");
+                    foreach (Command acceptable in acceptableCommands)
+                    {
+                        Console.WriteLine($"Press '{(char)acceptable}' to {acceptable}");
+                    }
+                    break;
+                case Command.JoinLobby:
+                    Console.WriteLine("Enter Lobby id");
+                    // TODO: take user input
+                    byte lobbyId = Convert.ToByte(Console.ReadLine());
+                    client.JoinLobby(lobbyId);
+                    break;
+                case Command.CreateLobby:
+                    Console.WriteLine("Creating Lobby");
+                    client.CreateLobby();
+                    break;
+                case Command.DisconnectLobby:
+                    Console.WriteLine("Leaving Lobby");
+                    client.DisconnectLobby();
+                    break;
+                case Command.IsReady:
+                    Console.WriteLine("READY");
+                    client.IsReady();
+                    break;
+                case Command.IsNotReady:
+                    Console.WriteLine("Not Ready");
+                    client.IsNotReady();
+                    break;
+                case Command.DisplayLobbies:
+                default:
+                    Console.WriteLine($"Command '{command}' is not yet implemented");
+                    break;
+            }
+        }
+        else
+        {
+            Console.WriteLine($"Command can not be used at this time (press '{(char)Command.ShowHelp}' to show usable commands)");
         }
     }
 

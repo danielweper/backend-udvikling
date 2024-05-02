@@ -1,33 +1,53 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.SignalR.Client;
-using Turnbased_Game.Models.Packets;
-using Turnbased_Game.Models.Packets.Transport;
+﻿using Microsoft.AspNetCore.SignalR.Client;
+using Core.Packets;
+using Core.Packets.Transport;
+using Core.Packets.Client;
+using Core.Packets.Server;
+using Core.Packets.Shared;
+using ServerLogic;
+using Core.Model;
+using System.Xml.Linq;
 
 namespace ClientCLI
 {
     internal class CliTransporter : PacketTransport
     {
         private readonly HubConnection _connection;
-        private readonly string _hubUrl = "http://localhost:YOUR_PORT/gameHub";
+        private readonly string _hubUrl = "http://localhost:5163/game";
 
-        public CliTransporter() {
-            this.PacketReceived += delegate (IPackage p) { lastReceived = p; };
-            this.PacketSent += delegate (IPackage p) { lastSent = p; };
+        public CliTransporter() : base() {
             _connection = new HubConnectionBuilder()
                 .WithUrl(_hubUrl) 
                 .Build();
-            _connection.On<IPackage>("SendPackage", package => Console.WriteLine($"Send package with package id: {package.id}"));
-            StartConnectionAsync().Wait();
-        }
-        public IPackage? lastSent { get; protected set; }
-        public IPackage? lastReceived { get; protected set; }
+            _connection.Closed += (Exception? e) => { Disconnected(); return Task.CompletedTask; };
+            _connection.Reconnected += (string? s) => { Connected(); return Task.CompletedTask; };
 
-        public bool hasSent => (lastSent != null);
-        public bool hasReceived => (lastReceived != null);
+            // Shared (and simple)
+            _connection.On("Ping", () => ReceivePacket(new PingPacket()));
+            _connection.On("Acknowledged", () => ReceivePacket(new AcknowledgedPacket()));
+            _connection.On("Accepted", (byte requestId) => ReceivePacket(new AcceptedPacket(requestId)));
+            _connection.On("Denied", (byte requestId) => ReceivePacket(new DeniedPacket(requestId)));
+            _connection.On("InvalidRequest", (byte requestId, string errorMessage) => ReceivePacket(new InvalidRequestPacket(requestId, errorMessage)));
+            
+            // Not shared
+            _connection.On("LobbyCreated", (byte lobbyId) => ReceivePacket(new LobbyCreatedPacket(lobbyId)));
+            _connection.On("LobbyInfo", (byte lobbyId, string host, string[] players, int maxPlayerCount, int visibility, string info) =>
+            {
+                ReceivePacket(new LobbyInfoPacket(info));
+            });
+            //_connection.On("KickPlayer", (byte playerId,));
+            _connection.On("UserMessage", (byte sender, string content) => ReceivePacket(new UserMessagePacket(sender, content)));
+            _connection.On("PlayerJoinedLobby", (byte playerId, string playerInfo) => ReceivePacket(new PlayerJoinedLobbyPacket(playerId, new PlayerProfile(Color.Pink, "Name"))));
+
+
+            StartConnectionAsync().Wait();
+
+            if (_connection.State == HubConnectionState.Connected)
+            {
+                Connected();
+            }
+        }
+
         private async Task StartConnectionAsync()
         {
             try
@@ -40,17 +60,25 @@ namespace ClientCLI
                 Console.WriteLine($"Error establishing SignalR connection: {ex.Message}");
             }
         }
-        public override async Task<IPackage?> SendPacket(IPackage package)
+        public override async Task<IPacket?> SendPacket(IPacket package)
         {
+            switch (package.Type) {
+                case PacketType.CreateLobby:
+                    await _connection.InvokeAsync($"{package.Type}", 10, 0, null);
+                    break;
+                case PacketType.JoinLobby:
+                    PlayerProfile playerProfile = new(Color.Red,"CossaiXFelix");
+                    await _connection.InvokeAsync($"{package.Type}", 107, playerProfile);
+                    break;
+                //case PacketType.ListAvailableLobbies:
+            }
             await base.SendPacket(package);
-            await _connection.StartAsync();
-            await _connection.InvokeAsync("ReceivePacket", package);
             return null;
         }
 
-        public override void ReceivePacket(IPackage package)
+        public override async void ReceivePacket(IPacket package)
         {
-            
+            base.ReceivePacket(package);
         }
     }
 }
