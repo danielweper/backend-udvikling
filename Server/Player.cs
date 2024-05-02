@@ -7,29 +7,7 @@ public class Player(string displayName, byte participantId, IPlayerProfile playe
 {
     public string DisplayName { get; set; } = displayName;
     public byte ParticipantId { get; set; } = participantId;
-    public PlayerRole Role { get; set; } = PlayerRole.Fighter;
+    public PlayerRole Role { get; set; } = PlayerRole.Spectator;
     public IPlayerProfile Profile { get; set; } = playerProfile;
-    public bool ReadyStatus { get; set; }
-    public bool ExecutedStatus { get; set; }
-    public int Health { get; set; }
-    public int Attack { get; set; }
-    public int Defense { get; set; }
-    public FightAction FightAction { get; set; }
-
-    public void ExecuteTurn(string turnInfo)
-    {
-        if (turnInfo == FightAction.Attack.ToString())
-        {
-            FightAction = FightAction.Attack;
-        }
-        else if (turnInfo == FightAction.Defense.ToString())
-        {
-            FightAction = FightAction.Defense;
-        }
-    }
-}
-public enum FightAction
-{
-    Attack,
-    Defense
+    public bool ReadyStatus { get; set; } = false;
 }

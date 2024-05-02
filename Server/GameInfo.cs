@@ -1,3 +1,5 @@
+using ServerLogic.Model.Fighting;
+
 namespace ServerLogic;
 
 public readonly struct GameInfo(Game game)

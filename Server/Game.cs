@@ -1,3 +1,5 @@
+using ServerLogic.Model.Fighting;
+
 namespace ServerLogic;
 
 public class Game(GameType gameType)

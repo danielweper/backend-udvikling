@@ -1,22 +1,20 @@
 namespace ServerLogic;
 
-public class Lobby
+public class Lobby : ILobby
 {
-    public readonly byte Id;
+    public byte Id { get; }
     public int MaxPlayerCount { get; private set; }
     public int PlayerCount => _players.Count;
     public Player Host => _players[0];
     public IReadOnlyList<Player> Players => _players.AsReadOnly();
-    private List<Player> _players;
-    private Game? _game;
     public LobbyVisibility Visibility { get; private set; }
+    public Game? Game { get; private set; }
+    private List<Player> _players;
 
-    public Lobby(byte id, Player host, int maxPlayerCount = 10,
-        LobbyVisibility visibility = LobbyVisibility.Public)
+    public Lobby(byte id, Player host, int maxPlayerCount = 10, LobbyVisibility visibility = LobbyVisibility.Public)
     {
         Id = id;
-        _players = new List<Player>();
-        _players.Add(host);
+        _players = [host];
         MaxPlayerCount = maxPlayerCount;
         Visibility = visibility;
     }
@@ -24,12 +22,13 @@ public class Lobby
     public LobbyInfo GetInfo()
     {
         return new LobbyInfo(Id, Host, _players.ToArray(), MaxPlayerCount, Visibility,
-            _game?.GetInfo()) /*returns null, if game is null - if not, it calls GetInfo*/;
+            Game?.GetInfo());
     }
 
     public void AddPlayer(Player player)
     {
         _players.Add(player);
+        player.ParticipantId = generateNextId();
     }
 
     public void RemovePlayer(Player player)
@@ -37,42 +36,19 @@ public class Lobby
         _players.Remove(player);
     }
 
-    public Game CreateNewGame(GameType gameType)
+    public void CreateNewGame(GameType gameType)
     {
-        return _game = new Game(gameType);
+        Game = new Game(gameType);
     }
 
-    public Game? GetGame()
+    private byte nextId = 0;
+    private byte generateNextId()
     {
-        return _game;
-    }
-
-    public Player? GetPlayer(byte participantId)
-    {
-        foreach (var player in _players)
+        do
         {
-            if (player.ParticipantId == participantId)
-            {
-                return player;
-            }
-        }
-        return null;
-    }
+            nextId++;
+        } while (nextId != 0 && !_players.All((Player p) => p.ParticipantId == nextId));
 
-    public void LeaveGame(Game game)
-    {
-        //TODO
-    }
-
-    public void UpdatePlayerId()
-    {
-        _players = _players.OrderByDescending(pl => pl.ParticipantId).ToList();
-
-        byte i = 0;
-        foreach (var player in _players)
-        {
-            player.ParticipantId = i;
-            i++;
-        }
+        return nextId;
     }
 }
