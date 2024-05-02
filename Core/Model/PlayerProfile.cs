@@ -2,7 +2,7 @@ using System.Text;
 
 namespace Core.Model;
 
-public class PlayerProfile(Color color, string name, string connectionId)
+public class PlayerProfile(Color color, string name, string connectionId) : IPlayerProfile
 {
     public string ConnectionId { get; init; } = connectionId;
     public Color Color { get; private set; } = color;

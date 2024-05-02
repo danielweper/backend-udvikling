@@ -2,7 +2,8 @@ namespace Core.Model;
 
 public interface IPlayerProfile
 {
-    Color color { get; }
+    string ConnectionId { get; }
+    Color Color { get; }
     //public Image avatar;
-    string name { get; }
+    string Name { get; }
 }
