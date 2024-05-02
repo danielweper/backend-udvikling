@@ -14,4 +14,16 @@ public readonly struct LobbyInfo(
     public int maxPlayer { get; } = maxPlayerCount;
     public LobbyVisibility LobbyVisibility { get; } = lobbyVisibility;
     public GameInfo? gameInfo { get; } = gameInfo;
+
+    public override string ToString()
+    {
+        return (
+            $"LobbyId: {id} \n" +
+            $"Host: {host} \n" +
+            $"Players: {string.Join(", \n", players.Select(player => player.ToString()).ToArray())} \n" +
+            $"MaxPlayers: {maxPlayer} \n" +
+            $"Visibility: {LobbyVisibility} \n" +
+            $"Game: {gameInfo?.ToString()} \n"
+            );
+    }
 }
