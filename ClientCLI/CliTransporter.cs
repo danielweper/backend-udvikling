@@ -68,7 +68,8 @@ namespace ClientCLI
                     break;
                 case PacketType.JoinLobby:
                     PlayerProfile playerProfile = new(Color.Red,"CossaiXFelix");
-                    await _connection.InvokeAsync($"{package.Type}", 107, playerProfile);
+                    JoinLobbyPacket joinLobbyPacket = (JoinLobbyPacket)package;
+                    await _connection.InvokeAsync($"{package.Type}", joinLobbyPacket.LobbyId, playerProfile);
                     break;
                 //case PacketType.ListAvailableLobbies:
             }
