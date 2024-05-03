@@ -37,11 +37,17 @@ namespace ClientCLI
             _connection.On("AvailableLobbies", (string lobbyInfos) => ReceivePacket(new AvailableLobbiesPacket(lobbyInfos)));
 
             
-            //_connection.On("KickPlayer", (byte playerId,));
+            //Message  
             _connection.On("UserMessage", (byte sender, string content) => ReceivePacket(new UserMessagePacket(sender, content)));
+            
             _connection.On("PlayerJoinedLobby", (byte playerId, string playerInfo) => ReceivePacket(new PlayerJoinedLobbyPacket(playerId, new PlayerProfile(Color.Pink, "Name"))));
-
-
+            //_connection.On("KickPlayer", (byte playerId,));
+            
+            //Game
+            _connection.On("ToggleReadyToStart", (byte lobbyId, byte playerId,bool status) => ReceivePacket(new ToggleReadyPacket(lobbyId,playerId, status)));
+            
+            //Battle
+            
             StartConnectionAsync().Wait();
 
             if (_connection.State == HubConnectionState.Connected)
@@ -79,7 +85,15 @@ namespace ClientCLI
                 //case PacketType.ListAvailableLobbies:
                 case PacketType.SendMessage:
                     var sendMessagePacket = (SendMessagePacket)package;
-                    await _connection.InvokeAsync("SendMessage", sendMessagePacket.SenderId ,sendMessagePacket.Message);
+                    await _connection.InvokeAsync($"{package.Type}", sendMessagePacket.SenderId ,sendMessagePacket.Message);
+                    break;
+                case PacketType.GameStarting:
+                    var gameStartingPacket = (StartGamePacket)package;
+                    await _connection.InvokeAsync($"{package.Type}");
+                    break;
+                case PacketType.ToggleReadyToStart:
+                    var toggleReadyToStart = ((ToggleReadyToStartPacket)package);
+                    await _connection.InvokeAsync("ToggleIsPlayerReady", toggleReadyToStart.LobbyId, toggleReadyToStart.PlayerId,toggleReadyToStart.NewStatus);
                     break;
             }
             await base.SendPacket(package);

@@ -51,6 +51,7 @@ public class Client : IClient
     public event Action<byte, IPlayerProfile>? PlayerChangedProfile;
     public event Action<byte, IRole>? PlayerChangedRole;
     public event Action<byte, IRole>? RoleChangeRequested;
+    public event Action<byte, bool> PlayerStatusChanged;
 
     public event Action<string>? ListingLobbies;
 
@@ -84,12 +85,12 @@ public class Client : IClient
 
     public void IsReady()
     {
-        SendPackage(new ToggleReadyToStartPacket(true));
+        SendPackage(new ToggleReadyToStartPacket(lobbyId,id,true));
     }
 
     public void IsNotReady()
     {
-        SendPackage(new ToggleReadyToStartPacket(false));
+        SendPackage(new ToggleReadyToStartPacket(lobbyId,id,false));
     }
 
     public void RequestProfileUpdate(IPlayerProfile profile)
@@ -101,7 +102,6 @@ public class Client : IClient
     {
         SendPackage(new RequestRoleChangePacket(role));
     }
-
     public void CreateLobby()
     {
         SendPackage(new CreateLobbyPacket());
@@ -149,9 +149,7 @@ public class Client : IClient
             // TODO: error message?
             return;
         }
-
         SendPackage(new StartGamePacket());
-        // TODO: act on the answer as well
     }
 
     public void Accepted(int requestId)
@@ -206,7 +204,8 @@ public class Client : IClient
                 ListingLobbies?.Invoke(lobbyInfos);
                 break;
             case PacketType.GameStarting:
-                GameStarting?.Invoke(0);
+                var gameStartingPacket = ((GameStartingPacket)package);
+                //GameStarting?.Invoke(gameStartingPacket.);
                 break;
             case PacketType.GameSettingsChanged:
                 IGameSettings newSettings = ((GameSettingsChangedPacket)package).NewSettings;
@@ -245,7 +244,10 @@ public class Client : IClient
                 break;
             case PacketType.RegisterPlayerTurn:
                 break;
-            case PacketType.PlayerReadyStatus:
+            case PacketType.ToggleReadyToStart:
+                var isReady  = ((ToggleReadyToStartPacket)package).NewStatus;
+                Console.WriteLine(isReady);
+                PlayerStatusChanged?.Invoke(id, isReady);
                 break;
             case PacketType.PlayerProfileCreated:
                 break;

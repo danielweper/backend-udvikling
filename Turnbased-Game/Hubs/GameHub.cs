@@ -17,8 +17,8 @@ public class GameHub : Hub<IHubClient>
     private readonly Random _random = new();
 
     private List<string> nonPlayerConnections = new();
-    private List<(string, Player)> playerConnections = new();
-
+    private List<(string, byte)> playerConnections = new();
+   
     public override async Task OnConnectedAsync()
     {
         nonPlayerConnections.Add(Context.ConnectionId);
@@ -32,7 +32,7 @@ public class GameHub : Hub<IHubClient>
         }
         else
         {
-            playerConnections.RemoveAll(((string, Player) pair) => pair.Item1 == Context.ConnectionId);
+            playerConnections.RemoveAll(((string, byte) pair) => pair.Item1 == Context.ConnectionId);
             // TODO: remove from lobby and inform the other players
         }
 
@@ -91,6 +91,7 @@ public class GameHub : Hub<IHubClient>
 
         Console.WriteLine($"Someone created a lobby {lobbyId}");
         Console.WriteLine($"New Lobby Count: {Server._lobbies.Count}");
+        playerConnections.Add((Context.ConnectionId, host.ParticipantId));
     }
 
     public async Task JoinLobby(byte lobbyId, PlayerProfile playerProfile)
@@ -200,13 +201,11 @@ public class GameHub : Hub<IHubClient>
         lobby.RemovePlayer(player);
 
         // Finds the connection id for the specified player
-        (string, Player) connectionInfo = playerConnections.First(((string, Player) pair) => pair.Item2 == player);
-        string connectionId = connectionInfo.Item1;
-        playerConnections.Remove(connectionInfo);
-        nonPlayerConnections.Add(connectionId);
+        playerConnections.Remove((Context.ConnectionId, playerId));
+        nonPlayerConnections.Add(Context.ConnectionId);
 
         // Removes player from SignalR group
-        await Groups.RemoveFromGroupAsync(connectionId, $"{lobbyId}");
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"{lobbyId}");
 
         //Check if player is the last player left in lobby
         if (lobby.IsEmpty)
@@ -288,14 +287,13 @@ public class GameHub : Hub<IHubClient>
     //Start the Game(battle/battles)
     public async Task StartGame(byte lobbyId)
     {
-        // Acknowledged
-        await SendMessagePacket("Received Start Game request", MessageType.Acknowledged, Clients.Caller);
-
+        Console.WriteLine("Someone want to start the game");
         var lobby = Server.GetLobby(lobbyId);
 
         var allPlayersReady = lobby != null && lobby.Players.All(p => p.ReadyStatus);
         if (allPlayersReady)
         {
+            Console.WriteLine($"All players are ready");
             //Get all Fighters 
             var fighters = lobby?.Players.Where(p => p.Role == PlayerRole.Fighter).ToList();
 
@@ -306,8 +304,7 @@ public class GameHub : Hub<IHubClient>
                 //Check if there is even number of Fighters
                 if (fighters.Count % 2 != 0)
                 {
-                    await SendMessagePacket("Game cannot start, need even number of Fighters", MessageType.Denied,
-                        Clients.Caller);
+                    Console.WriteLine("Game cannot start, need even number of Fighters");
                     return;
                 }
 
@@ -327,17 +324,17 @@ public class GameHub : Hub<IHubClient>
                 }
 
                 //Send packet to client
-                // await Clients.Group($"{lobbyId}").StartGame(new GameStartingPacket(DateTime.Now));
-                await SendMessagePacket("Game Started", MessageType.Accepted, Clients.Caller);
+                await Clients.Group($"{lobbyId}").GameStarting(DateTime.Now);
+                Console.WriteLine("game Started");
             }
             else
             {
-                await SendMessagePacket("The game or fighters do not exist", MessageType.Denied, Clients.Caller);
+                Console.WriteLine("The game or fighters do not exist");
             }
         }
         else
         {
-            await SendMessagePacket("All Players are not ready", MessageType.Denied, Clients.Caller);
+            Console.WriteLine("All Players are not ready");
         }
     }
 
@@ -348,7 +345,6 @@ public class GameHub : Hub<IHubClient>
             type: MessageType.Denied);
         return true;
     }
-
 
     private async Task<bool> NoPlayerFound(Player? player)
     {
@@ -468,38 +464,40 @@ public class GameHub : Hub<IHubClient>
 
     public async Task ToggleIsPlayerReady(byte lobbyId, byte playerId, bool ready)
     {
-        // Acknowledged
-        await SendMessagePacket("Received player is Ready request", MessageType.Acknowledged, Clients.Caller);
-
+        Console.WriteLine("Someone wants to be ready to start game");
+        
         var lobby = Server.GetLobby(lobbyId);
-
+        
         if (NoLobbyFound(lobby).Result)
         {
+            Console.WriteLine("No Lobby found");
             return;
         }
 
         //Get player
-        var player = lobby.Players.FirstOrDefault((Player p) => p.ParticipantId == playerId);
+        var player = lobby.Players.FirstOrDefault(p => p.ParticipantId == playerId);
 
         if (player != null)
         {
             player.ReadyStatus = ready;
             //Send package
-            // await Clients.Group($"{lobbyId}").ToggleReadyToStart(new PlayerReadyStatusPacket(ready, playerId));
-
-            if (!ready)
+            
+            if (ready)
             {
-                await SendMessagePacket("You are ready to play", MessageType.Accepted, Clients.Caller);
+                Console.WriteLine("You are ready");
+                await Clients.Group($"{lobby.Id}").ToggleReadyToStart(lobbyId,playerId, ready);
+                Console.WriteLine("Your status is changed to ready");
             }
             else
             {
-                await SendMessagePacket("You are not ready to play", MessageType.Accepted, Clients.Caller);
+                Console.WriteLine("You are not ready");
+                await Clients.Group($"{lobby.Id}").ToggleReadyToStart(lobbyId,playerId,false);
+                Console.WriteLine("Your status is changed to false");
             }
         }
         else
         {
-            await SendMessagePacket(caller: Clients.Caller, message: "You are not in this lobby",
-                type: MessageType.Denied);
+            Console.WriteLine("You are not in this lobby");
         }
     }
 
@@ -606,12 +604,14 @@ public class GameHub : Hub<IHubClient>
 
         Console.WriteLine($"Message sent to the lobby {lobby.Id}");
     }
-
-    private byte GetPlayerId(string connectionId)
+    
+    //Get playerId from ConnectionId
+    private byte? GetPlayerId(string connectionId)
     {
+        // Search for the connectionId in playerConnections list
         var playerConnection = playerConnections.Find(pair => pair.Item1 == connectionId);
-
-        return playerConnection.Item2.ParticipantId;
+        
+        return playerConnection.Item2;
     }
 
     private byte GenerateLobbyId()
