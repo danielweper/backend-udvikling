@@ -56,7 +56,7 @@ public class Client : IClient
 
     public void SendMessage(string message)
     {
-        SendPackage(new SendMessagePacket(this.id, message));
+        SendPackage(new SendMessagePacket(id, message));
     }
 
     public void SubmitTurn(string turn)
@@ -183,11 +183,16 @@ public class Client : IClient
             case PacketType.LobbyInfo:
                 string lobbyInfo = ((LobbyInfoPacket)package).Info;
                 JoinedLobby?.Invoke(lobbyInfo);
+                var reader = new StringReader(lobbyInfo);
+                lobbyId = byte.Parse(await reader.ReadLineAsync() ?? string.Empty);
+                Console.WriteLine($"LobbyId: {lobbyId} \n");
                 break;
             case PacketType.PlayerJoinedLobby:
                 byte joinedId = ((PlayerJoinedLobbyPacket)package).PlayerId;
                 IPlayerProfile joinedProfile = ((PlayerJoinedLobbyPacket)package).Profile;
                 PlayerJoined?.Invoke(joinedId, joinedProfile);
+                id = joinedId;
+                Console.WriteLine($"PlayerId: {joinedId} \n");
                 break;
             case PacketType.PlayerLeftLobby:
                 byte leftId = ((PlayerLeftLobbyPacket)package).PlayerId;
