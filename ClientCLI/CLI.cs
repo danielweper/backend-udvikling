@@ -132,11 +132,11 @@ class CLI
                     client.DisconnectLobby();
                     break;
                 case Command.IsReady:
-                    Console.WriteLine("READY");
+                    //Console.WriteLine("READY");
                     client.IsReady();
                     break;
                 case Command.IsNotReady:
-                    Console.WriteLine("Not Ready");
+                    //Console.WriteLine("Not Ready");
                     client.IsNotReady();
                     break;
                 case Command.DisplayLobbies:
@@ -148,6 +148,9 @@ class CLI
                 
                     var message = Console.ReadLine();
                     if (message != null) client.SendMessage(message);
+                    break;
+                case Command.StartGame:
+                    client.StartGame();
                     break;
                 default:
                     Console.WriteLine($"Command '{command}' is not yet implemented");

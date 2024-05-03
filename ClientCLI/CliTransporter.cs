@@ -45,7 +45,7 @@ namespace ClientCLI
             
             //Game
             _connection.On("ToggleReadyToStart", (byte lobbyId, byte playerId,bool status) => ReceivePacket(new ToggleReadyPacket(lobbyId,playerId, status)));
-            
+            _connection.On("GameStarting", (byte lobbyId, DateTime time) => ReceivePacket(new StartGamePacket(lobbyId, time)));
             //Battle
             
             StartConnectionAsync().Wait();
@@ -87,13 +87,22 @@ namespace ClientCLI
                     var sendMessagePacket = (SendMessagePacket)package;
                     await _connection.InvokeAsync($"{package.Type}", sendMessagePacket.SenderId ,sendMessagePacket.Message);
                     break;
-                case PacketType.GameStarting:
+                case PacketType.StartGame:
                     var gameStartingPacket = (StartGamePacket)package;
-                    await _connection.InvokeAsync($"{package.Type}");
+                    await _connection.InvokeAsync("StartGame", gameStartingPacket.LobbyId);
+                    Console.WriteLine($"Game created at: {gameStartingPacket.Time}");
                     break;
                 case PacketType.ToggleReadyToStart:
                     var toggleReadyToStart = ((ToggleReadyToStartPacket)package);
                     await _connection.InvokeAsync("ToggleIsPlayerReady", toggleReadyToStart.LobbyId, toggleReadyToStart.PlayerId,toggleReadyToStart.NewStatus);
+                    if (toggleReadyToStart.NewStatus)
+                    {
+                        Console.WriteLine($"Player {toggleReadyToStart.PlayerId} is ready");
+                    }
+                    else if(!toggleReadyToStart.NewStatus)
+                    {
+                        Console.WriteLine($"{toggleReadyToStart.PlayerId} is not ready");
+                    }
                     break;
             }
             await base.SendPacket(package);

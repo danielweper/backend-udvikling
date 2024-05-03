@@ -293,7 +293,7 @@ public class GameHub : Hub<IHubClient>
         var allPlayersReady = lobby != null && lobby.Players.All(p => p.ReadyStatus);
         if (allPlayersReady)
         {
-            Console.WriteLine($"All players are ready");
+            Console.WriteLine("All players are ready");
             //Get all Fighters 
             var fighters = lobby?.Players.Where(p => p.Role == PlayerRole.Fighter).ToList();
 
@@ -312,19 +312,13 @@ public class GameHub : Hub<IHubClient>
                 {
                     //Create battle
                     var battle = new Battle(GenerateBattleId(game), fighters[i], fighters[i + 1]);
-                    // var battle = new Battle(GenerateBattleId(game));
-                    //game.InitializeBattles(battle);
-
-                    // //Add Two players to a battle
-                    // battle.AddPlayer(fighters[i]);
-                    // battle.AddPlayer(fighters[i + 1]);
-
+                    
                     //Add battle to game
                     game.Battles.Add(battle);
                 }
 
                 //Send packet to client
-                await Clients.Group($"{lobbyId}").GameStarting(DateTime.Now);
+                await Clients.Group($"{lobbyId}").GameStarting(lobbyId, DateTime.Now);
                 Console.WriteLine("game Started");
             }
             else

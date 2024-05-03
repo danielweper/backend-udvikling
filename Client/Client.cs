@@ -25,7 +25,7 @@ public class Client : IClient
 
         JoinedLobby += delegate(string s) { CurrentState |= ClientStates.IsInLobby; };
         LeftLobby += delegate(string s) { CurrentState &= ~ClientStates.IsInLobby; };
-        GameStarting += delegate(ulong u) { CurrentState |= ClientStates.IsInGame; };
+        GameStarting += delegate(DateTime u) { CurrentState |= ClientStates.IsInGame; };
 
         ReceivedUserMessage += ReceivedMessage;
         ReceivedSystemMessage += (string content) => ReceivedMessage?.Invoke(0, content);
@@ -46,7 +46,7 @@ public class Client : IClient
     public event Action<string>? LeftLobby;
     public event Action<byte, IPlayerProfile>? PlayerJoined;
     public event Action<byte>? PlayerLeft;
-    public event Action<ulong>? GameStarting;
+    public event Action<DateTime>? GameStarting;
     public event Action<IGameSettings>? GameSettingsChanged;
     public event Action<byte, IPlayerProfile>? PlayerChangedProfile;
     public event Action<byte, IRole>? PlayerChangedRole;
@@ -144,12 +144,12 @@ public class Client : IClient
 
     public void StartGame()
     {
-        if (!this.IsHost)
+        /*if (!this.IsHost)
         {
             // TODO: error message?
             return;
-        }
-        SendPackage(new StartGamePacket());
+        }*/
+        SendPackage(new StartGamePacket(lobbyId,DateTime.Now));
     }
 
     public void Accepted(int requestId)
@@ -204,8 +204,8 @@ public class Client : IClient
                 ListingLobbies?.Invoke(lobbyInfos);
                 break;
             case PacketType.GameStarting:
-                var gameStartingPacket = ((GameStartingPacket)package);
-                //GameStarting?.Invoke(gameStartingPacket.);
+                var gameStartingPacket = (GameStartingPacket)package;
+                GameStarting?.Invoke(gameStartingPacket.Startingtime);
                 break;
             case PacketType.GameSettingsChanged:
                 IGameSettings newSettings = ((GameSettingsChangedPacket)package).NewSettings;
@@ -245,8 +245,7 @@ public class Client : IClient
             case PacketType.RegisterPlayerTurn:
                 break;
             case PacketType.ToggleReadyToStart:
-                var isReady  = ((ToggleReadyToStartPacket)package).NewStatus;
-                Console.WriteLine(isReady);
+                var isReady  = ((ToggleReadyPacket)package).NewStatus;
                 PlayerStatusChanged?.Invoke(id, isReady);
                 break;
             case PacketType.PlayerProfileCreated:
