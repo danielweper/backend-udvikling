@@ -125,7 +125,7 @@ public class GameHub : Hub<IHubClient>
         lobby.AddPlayer(player);
 
         LobbyInfo lobbyInfo = new(lobbyId, lobby.Host, lobby.Players.ToArray(),
-            lobby.MaxPlayerCount, lobby.Visibility, "info ;)");
+            lobby.MaxPlayerCount, lobby.Visibility, lobby.Game?.GetInfo());
         await Clients.Caller.LobbyInfo(lobbyInfo.ToString());
         await Clients.Group($"{lobbyId}").PlayerJoinedLobby(player.ParticipantId, "profile");
 
@@ -244,16 +244,22 @@ public class GameHub : Hub<IHubClient>
         {
             foreach (var lobbyInfo in lobbiesInfo)
             {
-                stringBuilder.AppendLine(lobbyInfo.ToString());
+                // stringBuilder.AppendLine(lobbyInfo.ToString());
 
-                //  stringBuilder.AppendLine($"Lobby Id: {lobbyInfo.id}");
-                //  stringBuilder.AppendLine($"Host: {lobbyInfo.host.DisplayName}");
-                //  if (lobbyInfo.gameInfo is not null)
-                //  {
-                // // todo - gameinfo ???
-                //      stringBuilder.AppendLine($"GameType: {lobbyInfo.gameInfo.Value.GameSettings.GameType.ToString()}");
-                //      stringBuilder.AppendLine($"Number of battles: {lobbyInfo.gameInfo.GameSettings.Battles.Count}");
-                //  }
+                stringBuilder.AppendLine($"Lobby Id: {lobbyInfo.id}");
+                stringBuilder.AppendLine($"Host: {lobbyInfo.host.DisplayName}");
+                stringBuilder.AppendLine($"Players in lobby: {lobbyInfo.players.Length}/{lobbyInfo.maxPlayer}");
+                if (lobbyInfo.gameInfo is not null)
+                {
+                    // todo - gameinfo ???
+                    stringBuilder.AppendLine($"GameType: {lobbyInfo.gameInfo.Value.GameSettings.GameType.ToString()}");
+                    Console.WriteLine("Testing...");
+                    var battleHasStartedText = lobbyInfo.gameInfo.Value.BattleHasStarted
+                        ? "The game is currently in progress"
+                        : "The game has not started yet";
+
+                    stringBuilder.AppendLine(battleHasStartedText);
+                }
 
                 stringBuilder.AppendLine();
             }
@@ -263,7 +269,7 @@ public class GameHub : Hub<IHubClient>
         Console.WriteLine("Listing available lobbies for someone");
     }
 
-    public async Task CreateGame(byte lobbyId, GameType gameType = DefaultGameType)
+    /*public async Task CreateGame(byte lobbyId, GameType gameType = DefaultGameType)
     {
         // Acknowledged
         await SendMessagePacket("Received CreateGame request", MessageType.Acknowledged, Clients.Caller);
@@ -282,7 +288,7 @@ public class GameHub : Hub<IHubClient>
         {
             await SendMessagePacket("The lobby doesn't exist", MessageType.Denied, Clients.Caller);
         }
-    }
+    }*/
 
     //Start the Game(battle/battles)
     public async Task StartGame(byte lobbyId)
@@ -307,6 +313,9 @@ public class GameHub : Hub<IHubClient>
                     Console.WriteLine("Game cannot start, need even number of Fighters");
                     return;
                 }
+
+                // Game in progress status:
+                lobby.Game.BattlesHasStarted = true;
 
                 for (var i = 0; i < fighters.Count; i += 2)
                 {
