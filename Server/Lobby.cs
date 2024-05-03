@@ -21,10 +21,18 @@ public class Lobby : ILobby
         Visibility = visibility;
     }
 
+    public Lobby(byte id, Player host,
+        Game game, int maxPlayerCount = 10, LobbyVisibility visibility = LobbyVisibility.Public) : this(id, host,
+        maxPlayerCount, visibility)
+    {
+        Game = game;
+    }
+
+
     public LobbyInfo GetInfo()
     {
         return new LobbyInfo(Id, Host, _players.ToArray(), MaxPlayerCount, Visibility,
-            "GameINFO"/*Game?.GetInfo()*/);
+            "GameINFO" /*Game?.GetInfo()*/);
     }
 
     public void AddPlayer(Player player)
@@ -44,6 +52,7 @@ public class Lobby : ILobby
     }
 
     private byte nextId = 0;
+
     private byte generateNextId()
     {
         do

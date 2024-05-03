@@ -18,7 +18,7 @@ public class GameHub : Hub<IHubClient>
 
     private List<string> nonPlayerConnections = new();
     private List<(string, byte)> playerConnections = new();
-   
+
     public override async Task OnConnectedAsync()
     {
         nonPlayerConnections.Add(Context.ConnectionId);
@@ -79,7 +79,7 @@ public class GameHub : Hub<IHubClient>
 
         // Create lobby
         byte lobbyId = GenerateLobbyId();
-        Lobby lobby = new(lobbyId, host, maxPlayerCount, lobbyVisibility);
+        Lobby lobby = new(lobbyId, host, new Game(DefaultGameType), maxPlayerCount, lobbyVisibility);
         Server.AddLobby(lobby);
         await Clients.Caller.LobbyCreated(lobbyId);
         //Send the playerId to client
@@ -312,7 +312,7 @@ public class GameHub : Hub<IHubClient>
                 {
                     //Create battle
                     var battle = new Battle(GenerateBattleId(game), fighters[i], fighters[i + 1]);
-                    
+
                     //Add battle to game
                     game.Battles.Add(battle);
                 }
@@ -459,9 +459,9 @@ public class GameHub : Hub<IHubClient>
     public async Task ToggleIsPlayerReady(byte lobbyId, byte playerId, bool ready)
     {
         Console.WriteLine("Someone wants to be ready to start game");
-        
+
         var lobby = Server.GetLobby(lobbyId);
-        
+
         if (NoLobbyFound(lobby).Result)
         {
             Console.WriteLine("No Lobby found");
@@ -475,17 +475,17 @@ public class GameHub : Hub<IHubClient>
         {
             player.ReadyStatus = ready;
             //Send package
-            
+
             if (ready)
             {
                 Console.WriteLine("You are ready");
-                await Clients.Group($"{lobby.Id}").ToggleReadyToStart(lobbyId,playerId, ready);
+                await Clients.Group($"{lobby.Id}").ToggleReadyToStart(lobbyId, playerId, ready);
                 Console.WriteLine("Your status is changed to ready");
             }
             else
             {
                 Console.WriteLine("You are not ready");
-                await Clients.Group($"{lobby.Id}").ToggleReadyToStart(lobbyId,playerId,false);
+                await Clients.Group($"{lobby.Id}").ToggleReadyToStart(lobbyId, playerId, false);
                 Console.WriteLine("Your status is changed to false");
             }
         }
@@ -598,13 +598,13 @@ public class GameHub : Hub<IHubClient>
 
         Console.WriteLine($"Message sent to the lobby {lobby.Id}");
     }
-    
+
     //Get playerId from ConnectionId
     private byte? GetPlayerId(string connectionId)
     {
         // Search for the connectionId in playerConnections list
         var playerConnection = playerConnections.Find(pair => pair.Item1 == connectionId);
-        
+
         return playerConnection.Item2;
     }
 
