@@ -12,7 +12,7 @@ namespace ClientCLI
     internal class CliTransporter : PacketTransport
     {
         private readonly HubConnection _connection;
-        private readonly string _hubUrl = "http://localhost:5163/game";
+        private readonly string _hubUrl = "http://dtu62597.eduhost.dk:10291//game";
 
         public CliTransporter() : base() {
             _connection = new HubConnectionBuilder()
