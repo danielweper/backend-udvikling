@@ -41,7 +41,7 @@ public interface IHubClient
     public Task LobbyInfo(byte lobbyId, string host, string[] players, int maxPlayerCount, LobbyVisibility visibility, string gameInfo);
     public Task PlayerJoinedLobby(byte playerId, string profile);
     public Task PlayerLeftLobby(byte playerId);
-    // public Task AvailableLobbies(int amount);
+    // public Task AvailableLobbies(string() info);
     public Task AvailableLobbies(string lobbyInfos);
     public Task GameStarting(ulong startTime);
     // public Task GameSettingsChanged();

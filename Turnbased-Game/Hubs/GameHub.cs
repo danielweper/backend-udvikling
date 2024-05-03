@@ -217,7 +217,7 @@ public class GameHub : Hub<IHubClient>
         await Clients.Caller.Acknowledged(); // maybe accepted?
     }
 
-    public async Task ViewAvailableLobbies()
+    public async Task ListAvailableLobbies()
     {
         await SendMessagePacket("Received view AvailableLobbies", MessageType.Acknowledged,
             Clients.Caller); // Acknowledged
@@ -231,6 +231,7 @@ public class GameHub : Hub<IHubClient>
 
         StringBuilder stringBuilder = new();
 
+        List<string> strings = new List<string>();
         if (lobbiesInfo.Count == 0)
         {
             stringBuilder.AppendLine("No lobbies available to join");

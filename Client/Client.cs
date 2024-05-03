@@ -20,12 +20,12 @@ public class Client : IClient
     {
         Transporter = transporter;
         Transporter.PacketReceived += ReceivePackage;
-        Transporter.OnConnected += delegate () { CurrentState |= ClientStates.IsConnected; };
-        Transporter.OnDisconnected += delegate () { CurrentState &= ~ClientStates.IsConnected; };
+        Transporter.OnConnected += delegate() { CurrentState |= ClientStates.IsConnected; };
+        Transporter.OnDisconnected += delegate() { CurrentState &= ~ClientStates.IsConnected; };
 
-        JoinedLobby += delegate (string s) { CurrentState |= ClientStates.IsInLobby; };
-        LeftLobby += delegate (string s) { CurrentState &= ~ClientStates.IsInLobby; };
-        GameStarting += delegate (ulong u) { CurrentState |= ClientStates.IsInGame; };
+        JoinedLobby += delegate(string s) { CurrentState |= ClientStates.IsInLobby; };
+        LeftLobby += delegate(string s) { CurrentState &= ~ClientStates.IsInLobby; };
+        GameStarting += delegate(ulong u) { CurrentState |= ClientStates.IsInGame; };
 
         ReceivedUserMessage += ReceivedMessage;
         ReceivedSystemMessage += (string content) => ReceivedMessage?.Invoke(0, content);
@@ -35,7 +35,7 @@ public class Client : IClient
             CurrentState |= ClientStates.IsConnected;
         }
     }
-    
+
     public event Action<byte, string>? ReceivedUserMessage;
     public event Action<string>? ReceivedSystemMessage;
     public event Action<byte, string>? ReceivedMessage;
@@ -51,6 +51,8 @@ public class Client : IClient
     public event Action<byte, IPlayerProfile>? PlayerChangedProfile;
     public event Action<byte, IRole>? PlayerChangedRole;
     public event Action<byte, IRole>? RoleChangeRequested;
+
+    public event Action<string>? ListingLobbies;
 
     public bool IsHost => (this.id == 1);
 
@@ -117,6 +119,7 @@ public class Client : IClient
         };
         */
     }
+
     public void ChangeGameSettings(string settings)
     {
         if (!this.IsHost)
@@ -165,8 +168,8 @@ public class Client : IClient
     {
         await Transporter.SendPacket(package);
         lastPackage = package;
-
     }
+
     public virtual async void ReceivePackage(IPacket package)
     {
         switch (package.Type)
@@ -194,7 +197,8 @@ public class Client : IClient
                 PlayerLeft?.Invoke(leftId);
                 break;
             case PacketType.AvailableLobbies:
-               
+                string lobbyInfos = ((AvailableLobbiesPacket)package).LobbyInfo;
+                ListingLobbies?.Invoke(lobbyInfos);
                 break;
             case PacketType.GameStarting:
                 GameStarting?.Invoke(0);

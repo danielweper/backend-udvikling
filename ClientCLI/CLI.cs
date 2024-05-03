@@ -28,6 +28,7 @@ class CLI
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"{((InvalidRequestPacket)packet).ErrorMessage}");
             }
+
             Console.ForegroundColor = prevColor;
         };
 
@@ -47,6 +48,17 @@ class CLI
             Console.ForegroundColor = prevColor;
         };
 
+        client.ListingLobbies += (string info) =>
+        {
+            var prevColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.DarkGreen;
+            Console.WriteLine($"Listing available lobbies:");
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine(info);
+            Console.ForegroundColor = prevColor;
+        };
+
+
         while (true)
         {
             Console.WriteLine($"Current state: {client.CurrentState}");
@@ -57,6 +69,7 @@ class CLI
             {
                 break;
             }
+
             HandleCommand((Command)key.KeyChar, client);
         }
     }
@@ -98,7 +111,8 @@ class CLI
             }
         }
 
-        if (acceptableCommands.Contains(command)) {
+        if (acceptableCommands.Contains(command))
+        {
             switch (command)
             {
                 case Command.ShowHelp:
@@ -107,6 +121,7 @@ class CLI
                     {
                         Console.WriteLine($"Press '{(char)acceptable}' to {acceptable}");
                     }
+
                     break;
                 case Command.JoinLobby:
                     Console.WriteLine("Enter Lobby id");
@@ -141,7 +156,8 @@ class CLI
         }
         else
         {
-            Console.WriteLine($"Command can not be used at this time (press '{(char)Command.ShowHelp}' to show usable commands)");
+            Console.WriteLine(
+                $"Command can not be used at this time (press '{(char)Command.ShowHelp}' to show usable commands)");
         }
     }
 
@@ -156,7 +172,7 @@ class CLI
             case Command.JoinLobby:
                 Console.WriteLine("Joining lobby...");
                 client.JoinLobby(1);
-                
+
                 break;
             case Command.CreateLobby:
                 Console.WriteLine("Creating lobby...");
@@ -178,6 +194,7 @@ class CLI
             HandleFighterLobbyState(command, client);
         }
     }
+
     private void HandleHostLobbyState(Command command, Client client)
     {
         switch (command)
@@ -206,7 +223,7 @@ class CLI
                 break;
             case Command.SendMessage:
                 Console.WriteLine("Sending message...");
-                break; 
+                break;
             case Command.RequestRoleChange:
                 Console.WriteLine("Requesting role change...");
                 break;
@@ -219,7 +236,7 @@ class CLI
             case Command.IsNotReady:
                 Console.WriteLine("Setting not ready...");
                 break;
-        } 
+        }
     }
 
     private void HandleFightState(Command command, Client client)
