@@ -32,7 +32,7 @@ public class Lobby : ILobby
     public LobbyInfo GetInfo()
     {
         return new LobbyInfo(Id, Host, _players.ToArray(), MaxPlayerCount, Visibility,
-            "GameINFO" /*Game?.GetInfo()*/);
+            Game != null ? new GameInfo(Game) : null);
     }
 
     public void AddPlayer(Player player)
