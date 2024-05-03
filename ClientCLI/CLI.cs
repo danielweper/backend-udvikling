@@ -131,6 +131,9 @@ class CLI
                     client.IsNotReady();
                     break;
                 case Command.DisplayLobbies:
+                    Console.WriteLine("Listing available lobbies:");
+                    client.ListAvailableLobbies();
+                    break;
                 default:
                     Console.WriteLine($"Command '{command}' is not yet implemented");
                     break;

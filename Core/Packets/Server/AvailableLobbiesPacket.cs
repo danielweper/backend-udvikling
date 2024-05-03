@@ -1,7 +1,7 @@
 namespace Core.Packets.Server;
 
-public class AvailableLobbiesPacket : IPacket
+public class AvailableLobbiesPacket(string lobbyInfo) : IPacket
 {
     public PacketType Type => PacketType.AvailableLobbies;
-    public string[] LobbyInfo { get; set; }
+    public string LobbyInfo { get; set; } = lobbyInfo;
 }

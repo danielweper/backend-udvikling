@@ -35,6 +35,9 @@ namespace ClientCLI
             {
                 ReceivePacket(new LobbyInfoPacket(info));
             });
+            _connection.On("AvailableLobbies", (string lobbyInfos) => ReceivePacket(new AvailableLobbiesPacket(lobbyInfos)));
+            
+            
             //_connection.On("KickPlayer", (byte playerId,));
             _connection.On("UserMessage", (byte sender, string content) => ReceivePacket(new UserMessagePacket(sender, content)));
             _connection.On("PlayerJoinedLobby", (byte playerId, string playerInfo) => ReceivePacket(new PlayerJoinedLobbyPacket(playerId, new PlayerProfile(Color.Pink, "Name"))));

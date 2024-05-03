@@ -194,6 +194,7 @@ public class Client : IClient
                 PlayerLeft?.Invoke(leftId);
                 break;
             case PacketType.AvailableLobbies:
+               
                 break;
             case PacketType.GameStarting:
                 GameStarting?.Invoke(0);

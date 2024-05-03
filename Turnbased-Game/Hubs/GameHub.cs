@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.AspNetCore.SignalR;
 using Core.Packets.Client;
 using Core.Packets.Server;
@@ -14,7 +15,7 @@ public class GameHub : Hub<IHubClient>
     private const GameType DefaultGameType = GameType.RoundRobin;
     private const string DefaultName = "Joe";
 
-    
+
     private readonly Random _random = new();
 
     private List<string> nonPlayerConnections = new();
@@ -36,6 +37,7 @@ public class GameHub : Hub<IHubClient>
             playerConnections.RemoveAll(((string, Player) pair) => pair.Item1 == Context.ConnectionId);
             // TODO: remove from lobby and inform the other players
         }
+
         return base.OnDisconnectedAsync(exception);
     }
 
@@ -47,13 +49,15 @@ public class GameHub : Hub<IHubClient>
                 MessageType.Denied, Clients.Caller);
             return;
         }
+
         if (name.Any(c => !char.IsLetter(c)))
         {
-            await SendMessagePacket("This name is not Valid, please choose a name that doesn't contains ',' or new line",
+            await SendMessagePacket(
+                "This name is not Valid, please choose a name that doesn't contains ',' or new line",
                 MessageType.Denied, Clients.Caller);
             return;
         }
-        
+
         PlayerProfile playerProfile = new(color, name);
         await SendMessagePacket(
             $"You have successfully created a playerProfile with Color: {color.ToString()}, Name: {name}",
@@ -80,7 +84,8 @@ public class GameHub : Hub<IHubClient>
         Lobby lobby = new(lobbyId, host, maxPlayerCount, lobbyVisibility);
         Server.AddLobby(lobby);
         await Clients.Caller.LobbyCreated(lobbyId);
-        await Clients.Caller.LobbyInfo(lobbyId, host.DisplayName, [host.DisplayName], maxPlayerCount, lobbyVisibility, "INFO");
+        await Clients.Caller.LobbyInfo(lobbyId, host.DisplayName, [host.DisplayName], maxPlayerCount, lobbyVisibility,
+            "INFO");
         await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
         Console.WriteLine($"Someone created a lobby {lobbyId}");
         Console.WriteLine($"New Lobby Count: {Server._lobbies.Count}");
@@ -88,14 +93,13 @@ public class GameHub : Hub<IHubClient>
 
     public async Task JoinLobby(byte lobbyId, PlayerProfile playerProfile)
     {
-        
-        
         Console.WriteLine($"Someone wants to join the lobby {lobbyId}");
         Console.WriteLine($"Lobby Count: {Server._lobbies.Count}");
         foreach (Lobby l in Server._lobbies)
         {
             Console.WriteLine($"[LOBBY] {l.Id}");
         }
+
         var lobby = Server.GetLobby(lobbyId);
         Console.WriteLine($"Found '{lobby}'");
 
@@ -115,7 +119,8 @@ public class GameHub : Hub<IHubClient>
         Player player = new Player(displayName, GenerateParticipantId(lobby), playerProfile);
 
         lobby.AddPlayer(player);
-        await Clients.Caller.LobbyInfo(lobbyId, lobby.Host.DisplayName, lobby.Players.Select(p => p.DisplayName).ToArray(), lobby.MaxPlayerCount, lobby.Visibility, "info ;)");
+        await Clients.Caller.LobbyInfo(lobbyId, lobby.Host.DisplayName,
+            lobby.Players.Select(p => p.DisplayName).ToArray(), lobby.MaxPlayerCount, lobby.Visibility, "info ;)");
         await Clients.Group($"{lobbyId}").PlayerJoinedLobby(player.ParticipantId, "profile");
         await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
         Console.WriteLine($"{player.DisplayName} joined the lobby '{lobbyId}'");
@@ -218,12 +223,37 @@ public class GameHub : Hub<IHubClient>
             Clients.Caller); // Acknowledged
 
         //Get all the Lobbies from server
+        // List<LobbyInfo> lobbiesInfo = Server.GetAvailableLobbies();
         List<LobbyInfo> lobbiesInfo = Server.GetAvailableLobbies();
 
         // AvailableLobbiesPacket availableLobbiesPacketPacket = new AvailableLobbiesPacket(lobbiesInfo);
-
         //Send the packet to the client
-        // await Clients.Caller.ListAvailableLobbiesRequest(availableLobbiesPacketPacket);
+
+        StringBuilder stringBuilder = new();
+
+        if (lobbiesInfo.Count == 0)
+        {
+            stringBuilder.AppendLine("No lobbies available to join");
+            stringBuilder.AppendLine();
+        }
+        else
+        {
+            foreach (var lobbyInfo in lobbiesInfo)
+            {
+                stringBuilder.AppendLine($"Lobby Id: {lobbyInfo.id}");
+                stringBuilder.AppendLine($"Host: {lobbyInfo.host.DisplayName}");
+                if (lobbyInfo.gameInfo is not null)
+                {
+                    stringBuilder.AppendLine($"GameType: {lobbyInfo.gameInfo.Value.GameSettings.GameType.ToString()}");
+                    stringBuilder.AppendLine($"Number of battles: {lobbyInfo.gameInfo.Value.Battles.Count}");
+                }
+
+                stringBuilder.AppendLine();
+            }
+        }
+
+        await Clients.Caller.AvailableLobbies(stringBuilder.ToString());
+        Console.WriteLine("Listing available lobbies for someone");
     }
 
     public async Task CreateGame(byte lobbyId, GameType gameType = DefaultGameType)
@@ -366,7 +396,6 @@ public class GameHub : Hub<IHubClient>
 
         if (battle.Fighters.Select(fighter => fighter.PlayerId).Contains(participantId))
         {
-
         }
         else
         {
