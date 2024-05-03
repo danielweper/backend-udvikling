@@ -38,7 +38,7 @@ public interface IHubClient
     public Task InvalidRequest(byte requestId, string errorMessage);
     // Server to client
     public Task LobbyCreated(byte lobbyId);
-    public Task LobbyInfo(byte lobbyId, string host, string[] players, int maxPlayerCount, LobbyVisibility visibility, string gameInfo);
+    public Task LobbyInfo(string lobbyInfo);
     public Task PlayerJoinedLobby(byte playerId, string profile);
     public Task PlayerLeftLobby(byte playerId);
     public Task AvailableLobbies(int amount);

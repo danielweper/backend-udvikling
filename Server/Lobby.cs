@@ -24,7 +24,7 @@ public class Lobby : ILobby
     public LobbyInfo GetInfo()
     {
         return new LobbyInfo(Id, Host, _players.ToArray(), MaxPlayerCount, Visibility,
-            Game?.GetInfo());
+            "GameINFO"/*Game?.GetInfo()*/);
     }
 
     public void AddPlayer(Player player)

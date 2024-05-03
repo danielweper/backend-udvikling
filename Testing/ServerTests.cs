@@ -2,8 +2,6 @@ using Moq;
 using Turnbased_Game.Hubs;
 using Core.Model;
 using ServerLogic;
-using Core.Model;
-using Xunit;
 
 namespace Turnbased_Game.Test;
 
@@ -64,4 +62,29 @@ public class ServerTests
         Assert.DoesNotContain(Server.GetAvailableLobbies(), lobbyInfo => lobbyInfo.id == lobby.Id);
         Assert.False(Server.LobbyIdIsFree(lobby.Id));
     }
+
+    /*[Fact]
+    public void Test_AddPlayer()
+    {
+        //Arrange
+        var server = new Server();
+        
+        var playerProfile = new PlayerProfile(Color.Red, "Cossai", "1");
+        var host = new Player("Cossai",0,playerProfile);
+        
+        var felixProfile = new PlayerProfile(Color.Black, "Felix", "2");
+        var player = new Player("Felix", 2, felixProfile);
+        
+        var lobby = new Lobby( 1, host, 9, LobbyVisibility.Private);
+        
+        // Act
+        server.AddLobby(lobby);
+        var lobbyInfo = server.GetLobbyInfo(1).GetValueOrDefault();
+        
+        Assert.Contains(lobbyInfo.host, lobbyPlayer => lobbyPlayer == player);
+
+        server.GetLobby(1)?.AddPlayer(player);
+        
+        //Assert
+    }*/
 }
