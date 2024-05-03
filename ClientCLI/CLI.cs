@@ -131,6 +131,15 @@ class CLI
                     client.IsNotReady();
                     break;
                 case Command.DisplayLobbies:
+                    Console.WriteLine("Display Av..Lobbies");
+                    client.ListAvailableLobbies();
+                    break;
+                case Command.SendMessage:
+                    Console.WriteLine("Enter A Message");
+                
+                    var message = Console.ReadLine();
+                    if (message != null) client.SendMessage(message);
+                    break;
                 default:
                     Console.WriteLine($"Command '{command}' is not yet implemented");
                     break;
@@ -202,7 +211,11 @@ class CLI
                 Console.WriteLine("Disconnecting lobby...");
                 break;
             case Command.SendMessage:
-                Console.WriteLine("Sending message...");
+                Console.WriteLine("Enter A Message");
+                
+                var message = Console.ReadLine();
+                if (message != null) client.SendMessage(message);
+                
                 break; 
             case Command.RequestRoleChange:
                 Console.WriteLine("Requesting role change...");

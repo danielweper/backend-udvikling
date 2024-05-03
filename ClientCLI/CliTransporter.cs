@@ -31,9 +31,9 @@ namespace ClientCLI
             
             // Not shared
             _connection.On("LobbyCreated", (byte lobbyId) => ReceivePacket(new LobbyCreatedPacket(lobbyId)));
-            _connection.On("LobbyInfo", (byte lobbyId, string host, string[] players, int maxPlayerCount, int visibility, string info) =>
+            _connection.On("LobbyInfo", (string lobbyInfo) =>
             {
-                ReceivePacket(new LobbyInfoPacket(info));
+                ReceivePacket(new LobbyInfoPacket(lobbyInfo));
             });
             //_connection.On("KickPlayer", (byte playerId,));
             _connection.On("UserMessage", (byte sender, string content) => ReceivePacket(new UserMessagePacket(sender, content)));
@@ -68,10 +68,14 @@ namespace ClientCLI
                     break;
                 case PacketType.JoinLobby:
                     PlayerProfile playerProfile = new(Color.Red,"CossaiXFelix");
-                    JoinLobbyPacket joinLobbyPacket = (JoinLobbyPacket)package;
+                    var joinLobbyPacket = (JoinLobbyPacket)package;
                     await _connection.InvokeAsync($"{package.Type}", joinLobbyPacket.LobbyId, playerProfile);
                     break;
                 //case PacketType.ListAvailableLobbies:
+                case PacketType.SendMessage:
+                    var sendMessagePacket = (SendMessagePacket)package;
+                    await _connection.InvokeAsync("SendMessage", sendMessagePacket.SenderId ,sendMessagePacket.Message);
+                    break;
             }
             await base.SendPacket(package);
             return null;
