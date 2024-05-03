@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.SignalR;
 using Core.Packets.Client;
 using Core.Packets.Server;
@@ -74,14 +75,21 @@ public class GameHub : Hub<IHubClient>
 
         // Create host
         var host = new Player(playerProfile.Name, GenerateParticipantId(null), playerProfile);
-
+        
         // Create lobby
         byte lobbyId = GenerateLobbyId();
         Lobby lobby = new(lobbyId, host, maxPlayerCount, lobbyVisibility);
         Server.AddLobby(lobby);
+        
+        
         await Clients.Caller.LobbyCreated(lobbyId);
-        await Clients.Caller.LobbyInfo(lobbyId, host.DisplayName, [host.DisplayName], maxPlayerCount, lobbyVisibility, "INFO");
+        //Send the playerId to client
+        await Clients.Caller.PlayerJoinedLobby(host.ParticipantId, "playerProfile");
+        
+        var lobbyInfo = lobby.GetInfo().ToString();
+        await Clients.Caller.LobbyInfo(lobbyInfo);
         await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
+        
         Console.WriteLine($"Someone created a lobby {lobbyId}");
         Console.WriteLine($"New Lobby Count: {Server._lobbies.Count}");
     }
@@ -104,7 +112,7 @@ public class GameHub : Hub<IHubClient>
             await Clients.Caller.InvalidRequest((byte)PacketType.JoinLobby, "No lobby found with corresponding id");
             return;
         }
-        else if (lobby.IsFull)
+        if (lobby.IsFull)
         {
             await Clients.Caller.Denied((byte)PacketType.JoinLobby);
             return;
@@ -112,11 +120,15 @@ public class GameHub : Hub<IHubClient>
 
         HashSet<string> playerNames = lobby.Players.Select(pl => pl.DisplayName).ToHashSet();
         string displayName = GetDisplayName(playerProfile.Name, playerNames);
-        Player player = new Player(displayName, GenerateParticipantId(lobby), playerProfile);
+        Player player = new(displayName, GenerateParticipantId(lobby), playerProfile);
 
         lobby.AddPlayer(player);
-        await Clients.Caller.LobbyInfo(lobbyId, lobby.Host.DisplayName, lobby.Players.Select(p => p.DisplayName).ToArray(), lobby.MaxPlayerCount, lobby.Visibility, "info ;)");
+        
+        LobbyInfo lobbyInfo = new(lobbyId, lobby.Host, lobby.Players.ToArray(),
+            lobby.MaxPlayerCount, lobby.Visibility, "info ;)");
+        await Clients.Caller.LobbyInfo(lobbyInfo.ToString());
         await Clients.Group($"{lobbyId}").PlayerJoinedLobby(player.ParticipantId, "profile");
+        
         await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
         Console.WriteLine($"{player.DisplayName} joined the lobby '{lobbyId}'");
     }
@@ -547,6 +559,33 @@ public class GameHub : Hub<IHubClient>
             Clients.Caller);
         // await Clients.OthersInGroup($"{lobbyId}")
         //     .PlayerRoleChanged(new PlayerRoleChangedPacket(playerId, newPlayerRole));
+    }
+    //Messages
+    public async Task SendMessage(byte playerId, string message)
+    {
+        //If they doesn't send playerId - Maybe
+        //var playerId = GetPlayerId(Context.ConnectionId);
+        
+        Console.WriteLine($"{playerId} wants to send a message '{message}'");
+
+        var lobby = Server._lobbies.Find(lobby => lobby.Players.Any(player => player.ParticipantId == playerId));
+        if (lobby == null)
+        {
+            Console.WriteLine("lobby doesn't exist");
+            await SendMessagePacket("The lobby doesn't exist", MessageType.Denied, Clients.Caller);
+            return;
+        }
+        
+        await Clients.Group($"{lobby.Id}").UserMessage(playerId, message);
+        
+        Console.WriteLine($"Message sent to the lobby {lobby.Id}");
+    }
+
+    private byte GetPlayerId(string connectionId)
+    {
+        var playerConnection = playerConnections.Find(pair => pair.Item1 == connectionId);
+
+        return playerConnection.Item2.ParticipantId;
     }
 
     private byte GenerateLobbyId()
