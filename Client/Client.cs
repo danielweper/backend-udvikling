@@ -10,8 +10,8 @@ namespace ClientLogic;
 
 public class Client : IClient
 {
-    public byte id { get; protected set; }
-    public byte lobbyId { get; protected set; }
+    // public byte? playerId { get; protected set; }
+    public byte? lobbyId { get; protected set; }
     public ClientStates CurrentState { get; protected set; }
     public PacketTransport Transporter { get; init; }
     protected IPacket? lastPackage = null;
@@ -23,7 +23,17 @@ public class Client : IClient
         Transporter.OnConnected += delegate() { CurrentState |= ClientStates.IsConnected; };
         Transporter.OnDisconnected += delegate() { CurrentState &= ~ClientStates.IsConnected; };
 
-        JoinedLobby += delegate(string s) { CurrentState |= ClientStates.IsInLobby; };
+        JoinedLobby += delegate(string lobbyInfo)
+        {
+            CurrentState |= ClientStates.IsInLobby;
+            // byte id,
+            //     Player host,
+            // Player[] players,
+            // int maxPlayerCount,
+            //     LobbyVisibility lobbyVisibility,
+            // GameInfo? gameInfo)
+            
+        };
         LeftLobby += delegate(string s) { CurrentState &= ~ClientStates.IsInLobby; };
         GameStarting += delegate(DateTime u) { CurrentState |= ClientStates.IsInGame; };
 
@@ -51,15 +61,15 @@ public class Client : IClient
     public event Action<byte, IPlayerProfile>? PlayerChangedProfile;
     public event Action<byte, IRole>? PlayerChangedRole;
     public event Action<byte, IRole>? RoleChangeRequested;
-    public event Action<byte, bool> PlayerStatusChanged;
+    public event Action<bool> PlayerStatusChanged;
 
     public event Action<string>? ListingLobbies;
 
-    public bool IsHost => (this.id == 1);
+    public bool IsHost = false; // todo
 
     public void SendMessage(string message)
     {
-        SendPackage(new SendMessagePacket(id, message));
+        SendPackage(new SendMessagePacket(message));
     }
 
     public void SubmitTurn(string turn)
@@ -75,22 +85,24 @@ public class Client : IClient
     public void JoinLobby(byte lobbyId)
     {
         SendPackage(new JoinLobbyPacket(lobbyId));
+        this.lobbyId = lobbyId;
     }
 
     public void DisconnectLobby()
     {
-        SendPackage(new DisconnectLobbyPacket());
+        SendPackage(new DisconnectLobbyPacket(lobbyId.Value));
         CurrentState = CurrentState & ~ClientStates.IsInLobby;
+        lobbyId = null;
     }
 
     public void IsReady()
     {
-        SendPackage(new ToggleReadyToStartPacket(lobbyId,id,true));
+        SendPackage(new ToggleReadyToStartPacket(lobbyId.Value, true));
     }
 
     public void IsNotReady()
     {
-        SendPackage(new ToggleReadyToStartPacket(lobbyId,id,false));
+        SendPackage(new ToggleReadyToStartPacket(lobbyId.Value, false));
     }
 
     public void RequestProfileUpdate(IPlayerProfile profile)
@@ -102,6 +114,7 @@ public class Client : IClient
     {
         SendPackage(new RequestRoleChangePacket(role));
     }
+
     public void CreateLobby()
     {
         SendPackage(new CreateLobbyPacket());
@@ -149,7 +162,7 @@ public class Client : IClient
             // TODO: error message?
             return;
         }*/
-        SendPackage(new StartGamePacket(lobbyId,DateTime.Now));
+        SendPackage(new StartGamePacket(lobbyId.Value, DateTime.Now));
     }
 
     public void Accepted(int requestId)
@@ -183,6 +196,7 @@ public class Client : IClient
                 break;
             case PacketType.LobbyInfo:
                 string lobbyInfo = ((LobbyInfoPacket)package).Info;
+                Console.WriteLine($"Lobbi info: {lobbyInfo}");
                 JoinedLobby?.Invoke(lobbyInfo);
                 var reader = new StringReader(lobbyInfo);
                 lobbyId = byte.Parse(await reader.ReadLineAsync() ?? string.Empty);
@@ -192,8 +206,6 @@ public class Client : IClient
                 byte joinedId = ((PlayerJoinedLobbyPacket)package).PlayerId;
                 IPlayerProfile joinedProfile = ((PlayerJoinedLobbyPacket)package).Profile;
                 PlayerJoined?.Invoke(joinedId, joinedProfile);
-                id = joinedId;
-                Console.WriteLine($"PlayerId: {joinedId} \n");
                 break;
             case PacketType.PlayerLeftLobby:
                 byte leftId = ((PlayerLeftLobbyPacket)package).PlayerId;
@@ -245,8 +257,8 @@ public class Client : IClient
             case PacketType.RegisterPlayerTurn:
                 break;
             case PacketType.ToggleReadyToStart:
-                var isReady  = ((ToggleReadyPacket)package).NewStatus;
-                PlayerStatusChanged?.Invoke(id, isReady);
+                var isReady = ((ToggleReadyPacket)package).NewStatus;
+                PlayerStatusChanged?.Invoke(isReady);
                 break;
             case PacketType.PlayerProfileCreated:
                 break;

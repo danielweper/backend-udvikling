@@ -5,6 +5,7 @@ using ServerLogic;
 using ServerLogic.Model.Fighting;
 using Core.Model;
 using Core.Packets;
+using Turnbased_Game.Models;
 
 namespace Turnbased_Game.Hubs;
 
@@ -16,26 +17,14 @@ public class GameHub : Hub<IHubClient>
 
     private readonly Random _random = new();
 
-    private List<string> nonPlayerConnections = new();
-    private List<(string, byte)> playerConnections = new();
-
     public override async Task OnConnectedAsync()
     {
-        nonPlayerConnections.Add(Context.ConnectionId);
+        ConnectionKnower.AddConnection(Context.ConnectionId);
     }
 
     public override Task OnDisconnectedAsync(Exception? exception)
     {
-        if (nonPlayerConnections.Contains(Context.ConnectionId))
-        {
-            nonPlayerConnections.Remove(Context.ConnectionId);
-        }
-        else
-        {
-            playerConnections.RemoveAll(((string, byte) pair) => pair.Item1 == Context.ConnectionId);
-            // TODO: remove from lobby and inform the other players
-        }
-
+        ConnectionKnower.RemoveConnection(Context.ConnectionId);
         return base.OnDisconnectedAsync(exception);
     }
 
@@ -91,7 +80,7 @@ public class GameHub : Hub<IHubClient>
 
         Console.WriteLine($"Someone created a lobby {lobbyId}");
         Console.WriteLine($"New Lobby Count: {Server._lobbies.Count}");
-        playerConnections.Add((Context.ConnectionId, host.ParticipantId));
+        ConnectionKnower.MakePlayerConnection(Context.ConnectionId, host, lobby);
     }
 
     public async Task JoinLobby(byte lobbyId, PlayerProfile playerProfile)
@@ -131,6 +120,7 @@ public class GameHub : Hub<IHubClient>
 
         await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
         Console.WriteLine($"{player.DisplayName} joined the lobby '{lobbyId}'");
+        ConnectionKnower.MakePlayerConnection(Context.ConnectionId, player, lobby);
     }
 
     private string GetDisplayName(string originalName, HashSet<string> playerNames)
@@ -178,11 +168,11 @@ public class GameHub : Hub<IHubClient>
         }
     }
 
-    public async Task LeaveLobby(byte lobbyId, byte playerId)
+    public async Task LeaveLobby(byte lobbyId)
     {
         var lobby = Server.GetLobby(lobbyId);
-
-        if (lobby == null)
+        byte? playerId = ConnectionKnower.GetPlayer(Context.ConnectionId)?.ParticipantId;
+        if (lobby == null || !playerId.HasValue)
         {
             await SendMessagePacket(caller: Clients.Caller, message: "This lobby does not exist",
                 type: MessageType.Denied);
@@ -201,8 +191,7 @@ public class GameHub : Hub<IHubClient>
         lobby.RemovePlayer(player);
 
         // Finds the connection id for the specified player
-        playerConnections.Remove((Context.ConnectionId, playerId));
-        nonPlayerConnections.Add(Context.ConnectionId);
+        ConnectionKnower.MakeNonPlayerConnection(Context.ConnectionId);
 
         // Removes player from SignalR group
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"{lobbyId}");
@@ -215,7 +204,7 @@ public class GameHub : Hub<IHubClient>
         else
         {
             //Send packet that a player left
-            await Clients.Group($"{lobbyId}").PlayerLeftLobby(playerId);
+            await Clients.Group($"{lobbyId}").PlayerLeftLobby(playerId.Value);
         }
 
         //Send packet to the player, that they have disconnect the lobby
@@ -253,7 +242,6 @@ public class GameHub : Hub<IHubClient>
                 {
                     // todo - gameinfo ???
                     stringBuilder.AppendLine($"GameType: {lobbyInfo.gameInfo.Value.GameSettings.GameType.ToString()}");
-                    Console.WriteLine("Testing...");
                     var battleHasStartedText = lobbyInfo.gameInfo.Value.BattleHasStarted
                         ? "The game is currently in progress"
                         : "The game has not started yet";
@@ -297,48 +285,46 @@ public class GameHub : Hub<IHubClient>
         var lobby = Server.GetLobby(lobbyId);
 
         var allPlayersReady = lobby != null && lobby.Players.All(p => p.ReadyStatus);
-        if (allPlayersReady)
-        {
-            Console.WriteLine("All players are ready");
-            //Get all Fighters 
-            var fighters = lobby?.Players.Where(p => p.Role == PlayerRole.Fighter).ToList();
-
-            //Check of a lobby has a game
-            var game = lobby?.Game;
-            if (fighters != null && game != null)
-            {
-                //Check if there is even number of Fighters
-                if (fighters.Count % 2 != 0)
-                {
-                    Console.WriteLine("Game cannot start, need even number of Fighters");
-                    return;
-                }
-
-                // Game in progress status:
-                lobby.Game.BattlesHasStarted = true;
-
-                for (var i = 0; i < fighters.Count; i += 2)
-                {
-                    //Create battle
-                    var battle = new Battle(GenerateBattleId(game), fighters[i], fighters[i + 1]);
-
-                    //Add battle to game
-                    game.Battles.Add(battle);
-                }
-
-                //Send packet to client
-                await Clients.Group($"{lobbyId}").GameStarting(lobbyId, DateTime.Now);
-                Console.WriteLine("game Started");
-            }
-            else
-            {
-                Console.WriteLine("The game or fighters do not exist");
-            }
-        }
-        else
+        if (!allPlayersReady)
         {
             Console.WriteLine("All Players are not ready");
+            return;
         }
+
+        Console.WriteLine("All players are ready");
+        //Get all Fighters 
+        var fighters = lobby?.Players.Where(p => p.Role == PlayerRole.Fighter).ToList();
+
+        //Check of a lobby has a game
+        var game = lobby?.Game;
+        if (fighters == null || game == null)
+        {
+            Console.WriteLine("The game or fighters do not exist");
+            return;
+        }
+
+        //Check if there is even number of Fighters
+        if (fighters.Count % 2 != 0)
+        {
+            Console.WriteLine("Game cannot start, need even number of Fighters");
+            return;
+        }
+
+        // Game in progress status:
+        lobby.Game.BattlesHasStarted = true;
+
+        for (var i = 0; i < fighters.Count; i += 2)
+        {
+            //Create battle
+            var battle = new Battle(GenerateBattleId(game), fighters[i], fighters[i + 1]);
+
+            //Add battle to game
+            game.Battles.Add(battle);
+        }
+
+        //Send packet to client
+        await Clients.Group($"{lobbyId}").GameStarting(lobbyId, DateTime.Now);
+        Console.WriteLine("game Started");
     }
 
     private async Task<bool> NoLobbyFound(Lobby? lobby)
@@ -364,14 +350,15 @@ public class GameHub : Hub<IHubClient>
         return true;
     }
 
-    public async Task LeaveBattle(byte lobbyId, byte participantId, byte battleId)
+    public async Task LeaveBattle(byte lobbyId, byte battleId)
     {
         // Acknowledged
         await SendMessagePacket("Received leave Game request", MessageType.Acknowledged, Clients.Caller);
 
         var lobby = Server.GetLobby(lobbyId);
+        var participantId = ConnectionKnower.GetPlayer(Context.ConnectionId)?.ParticipantId;
 
-        if (lobby == null)
+        if (lobby == null || participantId == null)
         {
             // TODO send message
             return;
@@ -401,7 +388,7 @@ public class GameHub : Hub<IHubClient>
         battle.PlayerForfeits(player);
         await SendMessagePacket("You have successfully left the battle", MessageType.Accepted, Clients.Caller);
 
-        if (battle.Fighters.Select(fighter => fighter.PlayerId).Contains(participantId))
+        if (battle.Fighters.Select(fighter => fighter.PlayerId).Contains(participantId.Value))
         {
         }
         else
@@ -437,39 +424,41 @@ public class GameHub : Hub<IHubClient>
         }
     }
 
-    public async Task ExecuteBattleRound(byte lobbyId, byte playerId, byte battleId, string playerTurn)
+    public async Task ExecuteBattleRound(byte lobbyId, byte battleId, string playerTurn)
     {
         // Acknowledged
         await SendMessagePacket("Received ExecuteBattle request", MessageType.Acknowledged, Clients.Caller);
         var lobby = Server.GetLobby(lobbyId);
         var game = lobby?.Game;
-        //Check of a lobby has a game
-        if (game != null)
-        {
-            //Get the battle player is in
-            var battle = game.GetBattle(battleId);
+        var playerId = ConnectionKnower.GetPlayer(Context.ConnectionId)?.ParticipantId;
 
-            var player = battle?.Fighters.FirstOrDefault(fighter => fighter.PlayerId == playerId);
-            if (battle != null && player != null)
-            {
-                /*battle.UpdateExecutedTurn(player);
-                player.ExecuteTurn(playerTurn);
-                battle.ExecutePlayerTurn(player);*/
-                battle.ExecuteRound();
-            }
-        }
-        else
+        //Check of a lobby has a game
+        if (game == null || playerId == null)
         {
             await SendMessagePacket("The lobby doesn't exist or the lobby doesn't have a game", MessageType.Denied,
                 Clients.Caller);
+            return;
+        }
+
+        //Get the battle player is in
+        var battle = game.GetBattle(battleId);
+
+        var player = battle?.Fighters.FirstOrDefault(fighter => fighter.PlayerId == playerId);
+        if (battle != null && player != null)
+        {
+            /*battle.UpdateExecutedTurn(player);
+            player.ExecuteTurn(playerTurn);
+            battle.ExecutePlayerTurn(player);*/
+            battle.ExecuteRound();
         }
     }
 
-    public async Task ToggleIsPlayerReady(byte lobbyId, byte playerId, bool ready)
+    public async Task ToggleIsPlayerReady(byte lobbyId, bool ready)
     {
         Console.WriteLine("Someone wants to be ready to start game");
 
         var lobby = Server.GetLobby(lobbyId);
+        var playerId = ConnectionKnower.GetPlayer(Context.ConnectionId)?.ParticipantId;
 
         if (NoLobbyFound(lobby).Result)
         {
@@ -480,30 +469,29 @@ public class GameHub : Hub<IHubClient>
         //Get player
         var player = lobby.Players.FirstOrDefault(p => p.ParticipantId == playerId);
 
-        if (player != null)
+        if (player == null)
         {
-            player.ReadyStatus = ready;
-            //Send package
+            Console.WriteLine("You are not in this lobby");
+            return;
+        }
 
-            if (ready)
-            {
-                Console.WriteLine("You are ready");
-                await Clients.Group($"{lobby.Id}").ToggleReadyToStart(lobbyId, playerId, ready);
-                Console.WriteLine("Your status is changed to ready");
-            }
-            else
-            {
-                Console.WriteLine("You are not ready");
-                await Clients.Group($"{lobby.Id}").ToggleReadyToStart(lobbyId, playerId, false);
-                Console.WriteLine("Your status is changed to false");
-            }
+        player.ReadyStatus = ready;
+        //Send package
+
+        // todo
+        if (ready)
+        {
+            Console.WriteLine("You are ready");
+            // await Clients.Group($"{lobby.Id}").ToggleReadyToStart(lobbyId, ready);
+            Console.WriteLine("Your status is changed to ready");
         }
         else
         {
-            Console.WriteLine("You are not in this lobby");
+            Console.WriteLine("You are not ready");
+            // await Clients.Group($"{lobby.Id}").ToggleReadyToStart(lobbyId, false);
+            Console.WriteLine("Your status is changed to false");
         }
     }
-
 
     public async Task ChangeGameSettings(Lobby lobby, GameSettings newGameSettings)
     {
@@ -526,8 +514,9 @@ public class GameHub : Hub<IHubClient>
         }
     }
 
-    public async Task ChangePlayerProfileInsideLobby(byte lobbyId, byte participantId, PlayerProfile newPlayerProfile)
+    public async Task ChangePlayerProfileInsideLobby(byte lobbyId, PlayerProfile newPlayerProfile)
     {
+        var participantId = ConnectionKnower.GetPlayer(Context.ConnectionId)?.ParticipantId;
         await SendMessagePacket($"Request to change player profile from playerId: {participantId}, received",
             MessageType.Acknowledged,
             Clients.Caller);
@@ -587,11 +576,12 @@ public class GameHub : Hub<IHubClient>
         //     .PlayerRoleChanged(new PlayerRoleChangedPacket(playerId, newPlayerRole));
     }
 
-    //Messages
-    public async Task SendMessage(byte playerId, string message)
+//Messages
+    public async Task SendMessage(string message)
     {
         //If they doesn't send playerId - Maybe
         //var playerId = GetPlayerId(Context.ConnectionId);
+        var playerId = ConnectionKnower.GetPlayer(Context.ConnectionId)!.ParticipantId;
 
         Console.WriteLine($"{playerId} wants to send a message '{message}'");
 
@@ -606,15 +596,6 @@ public class GameHub : Hub<IHubClient>
         await Clients.Group($"{lobby.Id}").UserMessage(playerId, message);
 
         Console.WriteLine($"Message sent to the lobby {lobby.Id}");
-    }
-
-    //Get playerId from ConnectionId
-    private byte? GetPlayerId(string connectionId)
-    {
-        // Search for the connectionId in playerConnections list
-        var playerConnection = playerConnections.Find(pair => pair.Item1 == connectionId);
-
-        return playerConnection.Item2;
     }
 
     private byte GenerateLobbyId()
@@ -687,7 +668,6 @@ public class GameHub : Hub<IHubClient>
         }
         */
     }
-
 
     enum MessageType
     {

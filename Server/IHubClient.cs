@@ -50,5 +50,5 @@ public interface IHubClient
     public Task BattleIsOver(); // TODO: send the winner?
     public Task UserMessage(byte senderId, string content);
     public Task SystemMessage(string content);
-    public Task ToggleReadyToStart(byte lobbyId, byte senderId, bool newStatus);
+    public Task ToggleReadyToStart(byte lobbyId, bool newStatus);
 }
