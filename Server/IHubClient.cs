@@ -48,7 +48,7 @@ public interface IHubClient
     public Task RoleChanged(byte playerId, string newRole);
     public Task ExecuteTurn(string turnInfo);
     public Task BattleIsOver(); // TODO: send the winner?
-    public Task UserMessage(byte senderId, string content);
+    public Task UserMessage(string senderName, string content);
     public Task SystemMessage(string content);
     public Task ToggleReadyToStart(byte lobbyId, bool newStatus);
 }

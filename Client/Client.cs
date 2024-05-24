@@ -10,7 +10,7 @@ namespace ClientLogic;
 
 public class Client : IClient
 {
-    // public byte? playerId { get; protected set; }
+    public string name { get; protected set; }
     public byte? lobbyId { get; protected set; }
     public ClientStates CurrentState { get; protected set; }
     public PacketTransport Transporter { get; init; }
@@ -38,7 +38,7 @@ public class Client : IClient
         GameStarting += delegate(DateTime u) { CurrentState |= ClientStates.IsInGame; };
 
         ReceivedUserMessage += ReceivedMessage;
-        ReceivedSystemMessage += (string content) => ReceivedMessage?.Invoke(0, content);
+        ReceivedSystemMessage += (string content) => ReceivedMessage?.Invoke("Server", content);
 
         if (Transporter.IsConnected)
         {
@@ -46,9 +46,9 @@ public class Client : IClient
         }
     }
 
-    public event Action<byte, string>? ReceivedUserMessage;
+    public event Action<string, string>? ReceivedUserMessage;
     public event Action<string>? ReceivedSystemMessage;
-    public event Action<byte, string>? ReceivedMessage;
+    public event Action<string, string>? ReceivedMessage;
     public event Action? BadRequest;
     public event Action<bool>? BattleIsOver;
     public event Action<string>? TurnIsOver;
@@ -82,9 +82,10 @@ public class Client : IClient
         SendPackage(new ListAvailableLobbiesPacket());
     }
 
-    public void JoinLobby(byte lobbyId)
+    public void JoinLobby(byte lobbyId, string? name)
     {
-        SendPackage(new JoinLobbyPacket(lobbyId));
+        
+        SendPackage(new JoinLobbyPacket(lobbyId, name));
         this.lobbyId = lobbyId;
     }
 
@@ -246,9 +247,9 @@ public class Client : IClient
                 BattleIsOver?.Invoke(true);
                 break;
             case PacketType.UserMessage:
-                byte senderId = ((UserMessagePacket)package).SenderId;
+                string senderName = ((UserMessagePacket)package).SenderName;
                 string userContent = ((UserMessagePacket)package).Content;
-                ReceivedUserMessage?.Invoke(senderId, userContent);
+                ReceivedUserMessage?.Invoke(senderName, userContent);
                 break;
             case PacketType.SystemMessage:
                 string systemContent = ((SystemMessagePacket)package).Content;

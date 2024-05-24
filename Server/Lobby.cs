@@ -55,6 +55,8 @@ public class Lobby : ILobby
 
     private byte generateNextId()
     {
+        return (byte)_players.Count;
+        
         do
         {
             nextId++;

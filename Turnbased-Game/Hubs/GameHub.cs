@@ -64,7 +64,7 @@ public class GameHub : Hub<IHubClient>
         playerProfile ??= DefaultPlayerProfile(Context.ConnectionId);
 
         // Create host
-        var host = new Player(playerProfile.Name, GenerateParticipantId(null), playerProfile);
+        var host = new Player(playerProfile.Name, 1, playerProfile);
 
         // Create lobby
         byte lobbyId = GenerateLobbyId();
@@ -109,9 +109,11 @@ public class GameHub : Hub<IHubClient>
 
         HashSet<string> playerNames = lobby.Players.Select(pl => pl.DisplayName).ToHashSet();
         string displayName = GetDisplayName(playerProfile.Name, playerNames);
-        Player player = new(displayName, GenerateParticipantId(lobby), playerProfile);
+        Player player = new(displayName, 1, playerProfile);
 
+        Console.WriteLine($"player joined starts with id: {player.ParticipantId}");
         lobby.AddPlayer(player);
+        Console.WriteLine($"player joined has id: {player.ParticipantId}");
 
         LobbyInfo lobbyInfo = new(lobbyId, lobby.Host, lobby.Players.ToArray(),
             lobby.MaxPlayerCount, lobby.Visibility, lobby.Game?.GetInfo());
@@ -581,7 +583,8 @@ public class GameHub : Hub<IHubClient>
     {
         //If they doesn't send playerId - Maybe
         //var playerId = GetPlayerId(Context.ConnectionId);
-        var playerId = ConnectionKnower.GetPlayer(Context.ConnectionId)!.ParticipantId;
+        var player = ConnectionKnower.GetPlayer(Context.ConnectionId)!;
+        var playerId = player.ParticipantId;
 
         Console.WriteLine($"{playerId} wants to send a message '{message}'");
 
@@ -593,7 +596,7 @@ public class GameHub : Hub<IHubClient>
             return;
         }
 
-        await Clients.Group($"{lobby.Id}").UserMessage(playerId, message);
+        await Clients.Group($"{lobby.Id}").UserMessage(player.DisplayName, message);
 
         Console.WriteLine($"Message sent to the lobby {lobby.Id}");
     }

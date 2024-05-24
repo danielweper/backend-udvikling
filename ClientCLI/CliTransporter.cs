@@ -48,7 +48,7 @@ namespace ClientCLI
 
             //Message  
             _connection.On("UserMessage",
-                (byte sender, string content) => ReceivePacket(new UserMessagePacket(sender, content)));
+                (string sender, string content) => ReceivePacket(new UserMessagePacket(sender, content)));
 
             _connection.On("PlayerJoinedLobby",
                 (byte playerId, string playerInfo) =>
