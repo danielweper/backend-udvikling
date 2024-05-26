@@ -5,6 +5,7 @@ using Core.Packets.Server;
 using Core.Packets.Shared;
 using Core.Packets.Transport;
 using ServerLogic;
+using System.Reflection.PortableExecutable;
 
 namespace ClientLogic;
 
@@ -14,6 +15,8 @@ public class Client : IClient
     public ClientStates CurrentState { get; protected set; }
     public PacketTransport Transporter { get; init; }
     protected IPacket? lastPackage = null;
+
+    protected List<string> players = new();
 
     public Client(PacketTransport transporter)
     {
@@ -25,6 +28,20 @@ public class Client : IClient
         JoinedLobby += delegate(string lobbyInfo)
         {
             CurrentState |= ClientStates.IsInLobby;
+            var info = ParseLobbyInfo(lobbyInfo);
+            lobbyId = info.Item1;
+            players = info.Item3.ToList();
+        };
+        LobbyChanged += delegate (string lobbyInfo)
+        {
+            var info = ParseLobbyInfo(lobbyInfo);
+            string host = info.Item2;
+            players = info.Item3.ToList();
+
+            if (host == Name)
+            {
+                CurrentState |= ClientStates.IsHost;
+            }
             // byte id,
             //     Player host,
             // Player[] players,
@@ -32,7 +49,11 @@ public class Client : IClient
             //     LobbyVisibility lobbyVisibility,
             // GameInfo? gameInfo)
         };
-        LeftLobby += delegate(string s) { CurrentState &= ~ClientStates.IsInLobby; };
+        LeftLobby += delegate(string s)
+        {
+            CurrentState &= ClientStates.IsConnected;
+            players.Clear();
+        };
         GameStarting += delegate(DateTime u) { CurrentState |= ClientStates.IsInGame; };
 
         ReceivedUserMessage += ReceivedMessage;
@@ -53,6 +74,7 @@ public class Client : IClient
     public event Action<bool>? BattleIsOver;
     public event Action<string>? TurnIsOver;
     public event Action<string>? JoinedLobby;
+    public event Action<string>? LobbyChanged;
     public event Action<string>? LeftLobby;
     public event Action<byte, IPlayerProfile>? PlayerJoined;
     public event Action<string>? PlayerLeft;
@@ -104,7 +126,7 @@ public class Client : IClient
     public void DisconnectLobby()
     {
         SendPackage(new DisconnectLobbyPacket(lobbyId.Value));
-        CurrentState &= ~ClientStates.IsInLobby;
+        LeftLobby?.Invoke(Name);
     }
 
     public void IsReady()
@@ -131,6 +153,7 @@ public class Client : IClient
     {
         Console.WriteLine($"Create lobby name: {Name}");
         SendPackage(new CreateLobbyPacket(Name));
+        CurrentState |= ClientStates.IsHost;
     }
 
     public void ChangeGameSettings(string settings)
@@ -200,11 +223,11 @@ public class Client : IClient
                 break;
             case PacketType.LobbyInfo:
                 string lobbyInfo = ((LobbyInfoPacket)package).Info;
-                Console.WriteLine($"Lobbi info: {lobbyInfo}");
                 JoinedLobby?.Invoke(lobbyInfo);
-                var reader = new StringReader(lobbyInfo);
-                lobbyId = byte.Parse(await reader.ReadLineAsync() ?? string.Empty);
-                Console.WriteLine($"LobbyId: {lobbyId} \n");
+                break;
+            case PacketType.LobbyChanged:
+                string lobbyChanged = ((LobbyChangedPacket)package).Info;
+                JoinedLobby?.Invoke(lobbyChanged);
                 break;
             case PacketType.PlayerJoinedLobby:
                 byte joinedId = ((PlayerJoinedLobbyPacket)package).PlayerId;
@@ -285,5 +308,17 @@ public class Client : IClient
                 // ignore
                 break;
         }
+    }
+
+    public static (byte, string, string[], int, LobbyVisibility) ParseLobbyInfo(string lobbyInfo)
+    {
+        var reader = new StringReader(lobbyInfo);
+        byte lobbyId = byte.Parse(reader.ReadLine()!);
+        string host = reader.ReadLine()!.Trim();
+        string[] players = reader.ReadLine()!.Trim().Split(", ");
+        int maxPlayers = int.Parse(reader.ReadLine()!);
+        LobbyVisibility visibility = (LobbyVisibility)int.Parse(reader.ReadLine()!);
+
+        return (lobbyId, host, players, maxPlayers, visibility);
     }
 }

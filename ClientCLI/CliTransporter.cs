@@ -41,15 +41,10 @@ namespace ClientCLI
 
             // Not shared
             _connection.On("LobbyCreated", (byte lobbyId) => ReceivePacket(new LobbyCreatedPacket(lobbyId)));
-            _connection.On("LobbyInfo", (string lobbyInfo) => { ReceivePacket(new LobbyInfoPacket(lobbyInfo)); });
+            _connection.On("LobbyInfo", (string lobbyInfo) => ReceivePacket(new LobbyInfoPacket(lobbyInfo)));
+            _connection.On("LobbyChanged", (string lobbyInfo) => ReceivePacket(new LobbyChangedPacket(lobbyInfo)));
             _connection.On("AvailableLobbies",
                 (string lobbyInfos) => ReceivePacket(new AvailableLobbiesPacket(lobbyInfos)));
-
-
-            //Message  
-            _connection.On("UserMessage",
-                (string sender, string content) => ReceivePacket(new UserMessagePacket(sender, content)));
-
             _connection.On("PlayerJoinedLobby",
                 (byte playerId, string playerInfo) =>
                     ReceivePacket(new PlayerJoinedLobbyPacket(playerId, new PlayerProfile(Color.Pink, "Name"))));
@@ -57,8 +52,13 @@ namespace ClientCLI
                 (string displayName) =>
                     ReceivePacket(new PlayerLeftLobbyPacket(displayName)));
             _connection.On("PlayerKicked",
-                () => 
+                () =>
                     ReceivePacket(new PlayerKickedPacket()));
+
+
+            //Message  
+            _connection.On("UserMessage",
+                (string sender, string content) => ReceivePacket(new UserMessagePacket(sender, content)));
 
             //Game
             _connection.On("ToggleReadyToStart",

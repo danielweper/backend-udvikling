@@ -36,6 +36,7 @@ public enum PacketType : byte
     PlayerReadyStatus = 41,
     PlayerProfileCreated = 43,
     PlayerKicked = 45,
+    LobbyChanged = 47,
 
     // Client packets.
     CreateLobby = 12,

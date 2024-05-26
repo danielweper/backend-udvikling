@@ -16,60 +16,34 @@ class CLI
 
         transporter.PacketSent += (IPacket packet) =>
         {
-            var prevColor = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.DarkYellow;
-            Console.WriteLine($"[OUTGOING] {packet}");
-            Console.ForegroundColor = prevColor;
+            PrintWithColor($"[OUTGOING] {packet}", ConsoleColor.DarkYellow);
         };
         transporter.PacketReceived += (IPacket packet) =>
         {
-            var prevColor = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine($"[INCOMING] {packet}");
+            PrintWithColor($"[INCOMING] {packet}", ConsoleColor.Yellow);
             if (packet.Type == PacketType.InvalidRequest)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"{((InvalidRequestPacket)packet).ErrorMessage}");
+                PrintWithColor($"{((InvalidRequestPacket)packet).ErrorMessage}", ConsoleColor.Red);
             }
-
-            Console.ForegroundColor = prevColor;
         };
 
         client.ReceivedUserMessage += (string senderName, string content) =>
         {
-            var prevColor = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine($"[{senderName}] {content}");
-            Console.ForegroundColor = prevColor;
+            PrintWithColor($"[{senderName}] {content}", ConsoleColor.Cyan);
         };
 
         client.JoinedLobby += (string info) =>
         {
-            var prevColor = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"Joined Lobby! ({info})");
-            Console.ForegroundColor = prevColor;
+            PrintWithColor($"Joined Lobby! ({info})", ConsoleColor.Green);
         };
         client.ListingLobbies += (string info) =>
         {
-            var prevColor = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.DarkYellow;
-            Console.WriteLine($"Listing available lobbies:");
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine(info);
-            Console.ForegroundColor = prevColor;
+            PrintWithColor($"Listing available lobbies:\n{info}", ConsoleColor.DarkYellow);
         };
-
-
-        client.Name = ChooseName(null)!;
-        Console.WriteLine($"Name: {client.Name}");
 
         client.PlayerLeft += (string leavingPlayer) =>
         {
-            var prevColor = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine($"{leavingPlayer} has left the lobby");
-            Console.ForegroundColor = prevColor;
+            PrintWithColor($"{leavingPlayer} has left the lobby", ConsoleColor.Magenta);
         };
 
         client.LeftLobby += (string leavingPlayer) =>
@@ -81,7 +55,10 @@ class CLI
         {
             PrintWithColor("Request denied", ConsoleColor.DarkRed);
         };
-        
+
+        client.Name = ChooseName(null)!;
+        Console.WriteLine($"Name: {client.Name}");
+
         while (true)
         {
             Console.WriteLine($"Current state: {client.CurrentState}");
@@ -174,11 +151,9 @@ class CLI
                 client.JoinLobby(lobbyId);
                 break;
             case Command.CreateLobby:
-                Console.WriteLine("Creating Lobby");
                 client.CreateLobby();
                 break;
             case Command.DisconnectLobby:
-                Console.WriteLine("Leaving Lobby");
                 client.DisconnectLobby();
                 break;
             case Command.IsReady:
@@ -190,12 +165,10 @@ class CLI
                 client.IsNotReady();
                 break;
             case Command.ListAvailableLobbies:
-                Console.WriteLine("Listing available lobbies:");
                 client.ListAvailableLobbies();
                 break;
             case Command.SendMessage:
                 Console.WriteLine("Enter A Message");
-
                 var message = Console.ReadLine();
                 if (message != null) client.SendMessage(message);
                 break;
