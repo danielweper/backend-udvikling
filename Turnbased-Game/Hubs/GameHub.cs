@@ -126,8 +126,9 @@ public class GameHub : Hub<IHubClient>
         LobbyInfo lobbyInfo = new(lobbyId, lobby.Host, lobby.Players.ToArray(),
             lobby.MaxPlayerCount, lobby.Visibility, lobby.Game?.GetInfo());
         await Clients.Group($"{lobbyId}").PlayerJoinedLobby(player.ParticipantId, "profile");
+        await Clients.Group($"{lobbyId}").LobbyChanged(lobbyInfo.ToString());
+        await Clients.Caller.LobbyInfo(lobbyInfo.ToString());
         await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
-        await Clients.Group($"{lobbyId}").LobbyInfo(lobbyInfo.ToString());
         Console.WriteLine($"{player.DisplayName} joined the lobby '{lobbyId}'");
         ConnectionKnower.MakePlayerConnection(Context.ConnectionId, player, lobby);
     }
