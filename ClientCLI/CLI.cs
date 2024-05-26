@@ -47,7 +47,7 @@ class CLI
         {
             var prevColor = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"Joined Lobby! ({info})");
+            Console.WriteLine($"Joined Lobby {info}");
             Console.ForegroundColor = prevColor;
         };
         client.ListingLobbies += (string info) =>

@@ -249,13 +249,7 @@ public class GameHub : Hub<IHubClient>
                 stringBuilder.AppendLine($"Players in lobby: {lobbyInfo.players.Length}/{lobbyInfo.maxPlayer}");
                 if (lobbyInfo.gameInfo is not null)
                 {
-                    // todo - gameinfo ???
-                    stringBuilder.AppendLine($"GameType: {lobbyInfo.gameInfo.Value.GameSettings.GameType.ToString()}");
-                    var battleHasStartedText = lobbyInfo.gameInfo.Value.BattleHasStarted
-                        ? "The game is currently in progress"
-                        : "The game has not started yet";
-
-                    stringBuilder.AppendLine(battleHasStartedText);
+                    stringBuilder.AppendLine(lobbyInfo.gameInfo.ToString());
                 }
 
                 stringBuilder.AppendLine();
