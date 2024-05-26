@@ -7,6 +7,7 @@ namespace ClientCLI;
 class CLI
 {
     private Client? client = null;
+
     public void Run()
     {
         CliTransporter transporter = new CliTransporter();
@@ -27,28 +28,20 @@ class CLI
 
         client.ReceivedUserMessage += (string senderName, string content) =>
         {
-            PrintWithColor($"[{senderId}] {content}", ConsoleColor.Cyan);
+            PrintWithColor($"[{senderName}] {content}", ConsoleColor.Cyan);
         };
 
-        client.JoinedLobby += (string info) =>
-        {
-            PrintWithColor($"Joined Lobby! ({info})", ConsoleColor.Green);
-        };
+        client.JoinedLobby += (string info) => { PrintWithColor($"Joined Lobby! ({info})", ConsoleColor.Green); };
         client.ListingLobbies += (string info) =>
         {
             PrintWithColor($"Listing available lobbies:", ConsoleColor.DarkYellow);
             PrintWithColor(info, ConsoleColor.Green);
         };
 
-        string? chosenName = null;
-        while (chosenName == null)
-        {
-            Console.WriteLine("Enter your name:");
-            chosenName = Console.ReadLine();
-            Console.WriteLine();
-        }
-        client.Name = chosenName;
-        Console.WriteLine($"Name: {chosenName}");
+     
+
+        client.Name = ChooseName(null)!;
+        Console.WriteLine($"Name: {client.Name}");
 
         while (true)
         {
@@ -60,8 +53,23 @@ class CLI
             {
                 break;
             }
+
             HandleCommand((Command)key.KeyChar, client);
         }
+    }
+
+    private string ChooseName(string? currentName)
+    {
+        string? chosenName = null;
+        while (string.IsNullOrWhiteSpace(chosenName) || chosenName.Contains(','))
+        {
+            Console.WriteLine("Enter your name:");
+            chosenName = Console.ReadLine();
+            Console.WriteLine();
+            if (chosenName == null && currentName != null)
+                break;
+        }
+        return (chosenName ?? currentName)!;
     }
 
     private void HandleCommand(Command command, Client client)
@@ -104,7 +112,8 @@ class CLI
 
         if (!acceptableCommands.Contains(command))
         {
-            Console.WriteLine($"Command can not be used at this time (press '{(char)Command.ShowHelp}' to show usable commands)");
+            Console.WriteLine(
+                $"Command can not be used at this time (press '{(char)Command.ShowHelp}' to show usable commands)");
             return;
         }
 
@@ -116,6 +125,7 @@ class CLI
                 {
                     Console.WriteLine($"Press '{(char)acceptable}' to {acceptable}");
                 }
+
                 break;
             case Command.JoinLobby:
                 Console.WriteLine("Enter Lobby id");
@@ -138,25 +148,23 @@ class CLI
                 Console.WriteLine("Not Ready");
                 client.IsNotReady();
                 break;
-            case Command.DisplayLobbies:
+            case Command.ListAvailableLobbies:
                 Console.WriteLine("Listing available lobbies:");
                 client.ListAvailableLobbies();
                 break;
             case Command.SendMessage:
                 Console.WriteLine("Enter A Message");
-                
+
                 var message = Console.ReadLine();
                 if (message != null)
                 {
                     client.SendMessage(message);
                 }
+
                 break;
             case Command.ChangeName:
-                string? newName = Console.ReadLine();
-                if (newName != null)
-                {
-                    client.Name = newName;
-                }
+                string newName  = ChooseName(this.client.Name);
+                this.client.Name = newName;
                 break;
             default:
                 Console.WriteLine($"Command '{command}' is not yet implemented");

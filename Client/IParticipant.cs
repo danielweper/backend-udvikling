@@ -15,7 +15,7 @@ public interface IParticipant
     public event Action BadRequest; 
 
     public void ListAvailableLobbies();
-    public void JoinLobby(byte lobbyId, string? name);
+    public void JoinLobby(byte lobbyId);
     public void DisconnectLobby();
     public void IsReady();
     public void IsNotReady();

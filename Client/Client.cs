@@ -66,7 +66,7 @@ public class Client : IClient
 
     public event Action<string>? ListingLobbies;
 
-    public bool IsHost => (this.id == 1);
+    public bool IsHost => (false);
     private string _name;
     public string Name {
         get => _name;
@@ -95,14 +95,14 @@ public class Client : IClient
         SendPackage(new ListAvailableLobbiesPacket());
     }
 
-    public void JoinLobby(byte lobbyId, string? name)
+    public void JoinLobby(byte lobbyId)
     {
         SendPackage(new JoinLobbyPacket(lobbyId, Name));
     }
 
     public void DisconnectLobby()
     {
-        SendPackage(new DisconnectLobbyPacket());
+        SendPackage(new DisconnectLobbyPacket(lobbyId.Value));
     }
 
     public void IsReady()
