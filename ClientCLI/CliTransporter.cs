@@ -107,7 +107,6 @@ namespace ClientCLI
                 case PacketType.ListAvailableLobbies:
                     await _connection.InvokeAsync($"{package.Type}");
                     break;
-                //case PacketType.ListAvailableLobbies:
                 case PacketType.SendMessage:
                     var sendMessagePacket = (SendMessagePacket)package;
                     await _connection.InvokeAsync($"{package.Type}", sendMessagePacket.Message);
@@ -129,7 +128,6 @@ namespace ClientCLI
                     {
                         Console.WriteLine("I'm not ready");
                     }
-
                     break;
                 case PacketType.DisconnectLobby:
                     var disconnectLobbyPacket = (DisconnectLobbyPacket)package;

@@ -102,7 +102,7 @@ public class GameHub : Hub<IHubClient>
         }
 
         var lobby = Server.GetLobby(lobbyId);
-        Console.WriteLine($"Found '{lobby}'");
+        Console.WriteLine($"Found '{lobby.Id}'");
 
         if (lobby == null)
         {
@@ -120,15 +120,14 @@ public class GameHub : Hub<IHubClient>
         string displayName = GetDisplayName(playerProfile.Name, playerNames);
         Player player = new(displayName, 1, playerProfile);
 
-        Console.WriteLine($"player joined starts with id: {player.ParticipantId}");
         lobby.AddPlayer(player);
-        Console.WriteLine($"player joined has id: {player.ParticipantId}");
+        Console.WriteLine($"{player.DisplayName} joined the lobby");
 
         LobbyInfo lobbyInfo = new(lobbyId, lobby.Host, lobby.Players.ToArray(),
             lobby.MaxPlayerCount, lobby.Visibility, lobby.Game?.GetInfo());
-        await Clients.Caller.LobbyInfo(lobbyInfo.ToString());
         await Clients.Group($"{lobbyId}").PlayerJoinedLobby(player.ParticipantId, "profile");
-
+        await Clients.Group($"{lobbyId}").LobbyChanged(lobbyInfo.ToString());
+        await Clients.Caller.LobbyInfo(lobbyInfo.ToString());
         await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
         Console.WriteLine($"{player.DisplayName} joined the lobby '{lobbyId}'");
         ConnectionKnower.MakePlayerConnection(Context.ConnectionId, player, lobby);
@@ -150,6 +149,7 @@ public class GameHub : Hub<IHubClient>
 
     public async Task KickPlayerFromLobby(string displayNameToKick, string reason, byte lobbyId)
     {
+        Console.WriteLine("The host wants to kick a player");
         var lobby = Server.GetLobby(lobbyId);
 
         if (lobby == null)
@@ -164,6 +164,7 @@ public class GameHub : Hub<IHubClient>
 
         if (player == null)
         {
+            Console.WriteLine("Nobody was kicked from the lobby");
             await Clients.Caller.Denied((byte)PacketType.KickPlayer);
             return;
         }
@@ -175,6 +176,8 @@ public class GameHub : Hub<IHubClient>
         await Clients.Client(kickedConnection).PlayerKicked();
         await Groups.RemoveFromGroupAsync(kickedConnection, $"{lobbyId}");
         await Clients.Group($"{lobbyId}").PlayerLeftLobby(player.DisplayName);
+        await Clients.Group($"{lobbyId}").LobbyChanged(lobby.GetInfo().ToString());
+        Console.WriteLine($"The host has kicked {player.DisplayName} from the lobby");
     }
 
     public async Task LeaveLobby(byte lobbyId)
@@ -214,6 +217,7 @@ public class GameHub : Hub<IHubClient>
         {
             //Send packet that a player left
             await Clients.Group($"{lobbyId}").PlayerLeftLobby(player.DisplayName);
+            await Clients.Group($"{lobbyId}").LobbyChanged(lobby.GetInfo().ToString());
         }
 
         //Send packet to the player, that they have disconnect the lobby
@@ -249,13 +253,7 @@ public class GameHub : Hub<IHubClient>
                 stringBuilder.AppendLine($"Players in lobby: {lobbyInfo.players.Length}/{lobbyInfo.maxPlayer}");
                 if (lobbyInfo.gameInfo is not null)
                 {
-                    // todo - gameinfo ???
-                    stringBuilder.AppendLine($"GameType: {lobbyInfo.gameInfo.Value.GameSettings.GameType.ToString()}");
-                    var battleHasStartedText = lobbyInfo.gameInfo.Value.BattleHasStarted
-                        ? "The game is currently in progress"
-                        : "The game has not started yet";
-
-                    stringBuilder.AppendLine(battleHasStartedText);
+                    stringBuilder.AppendLine(lobbyInfo.gameInfo.ToString());
                 }
 
                 stringBuilder.AppendLine();

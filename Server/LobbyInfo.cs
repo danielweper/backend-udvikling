@@ -24,10 +24,10 @@ public readonly struct LobbyInfo(
     {
         return (
             $"{id} \n" +
-            $"{host.DisplayName} \n" +
-            $"{string.Join(", ", players.Select(player => player.DisplayName).ToArray())} \n" +
-            $"{maxPlayer} \n" +
-            $"{LobbyVisibility} \n" +
+            $"Host: {host.DisplayName} \n" +
+            $"Players: {string.Join(", ", players.Select(player => player.DisplayName).ToArray())} \n" +
+            $"Max players: {maxPlayer} \n" +
+            $"Lobby visibility: {LobbyVisibility} \n" +
             $"{gameInfo} \n"
         );
     }
