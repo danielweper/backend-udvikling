@@ -26,6 +26,8 @@
     <ItemGroup>
       <ProjectReference Include="..\Core\Core.csproj" />
       <ProjectReference Include="..\Server\ServerLogic.csproj" />
+      <ProjectReference Include="D:\Dropbox\Daniel W\Programmering\C#\backend-udvikling\Core\Core.csproj" />
+      <ProjectReference Include="D:\Dropbox\Daniel W\Programmering\C#\backend-udvikling\Server\ServerLogic.csproj" />
     </ItemGroup>
 
 </Project>

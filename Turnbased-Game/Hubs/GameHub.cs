@@ -125,10 +125,9 @@ public class GameHub : Hub<IHubClient>
 
         LobbyInfo lobbyInfo = new(lobbyId, lobby.Host, lobby.Players.ToArray(),
             lobby.MaxPlayerCount, lobby.Visibility, lobby.Game?.GetInfo());
-        await Clients.Caller.LobbyInfo(lobbyInfo.ToString());
         await Clients.Group($"{lobbyId}").PlayerJoinedLobby(player.ParticipantId, "profile");
-
         await Groups.AddToGroupAsync(Context.ConnectionId, $"{lobbyId}");
+        await Clients.Group($"{lobbyId}").LobbyInfo(lobbyInfo.ToString());
         Console.WriteLine($"{player.DisplayName} joined the lobby '{lobbyId}'");
         ConnectionKnower.MakePlayerConnection(Context.ConnectionId, player, lobby);
     }
@@ -176,7 +175,7 @@ public class GameHub : Hub<IHubClient>
         await Clients.Client(kickedConnection).PlayerKicked();
         await Groups.RemoveFromGroupAsync(kickedConnection, $"{lobbyId}");
         await Clients.Group($"{lobbyId}").PlayerLeftLobby(player.DisplayName);
-        
+        await Clients.Group($"{lobbyId}").LobbyChanged(lobby.GetInfo().ToString());
         Console.WriteLine($"The host has kicked {player.DisplayName} from the lobby");
     }
 
@@ -217,6 +216,7 @@ public class GameHub : Hub<IHubClient>
         {
             //Send packet that a player left
             await Clients.Group($"{lobbyId}").PlayerLeftLobby(player.DisplayName);
+            await Clients.Group($"{lobbyId}").LobbyChanged(lobby.GetInfo().ToString());
         }
 
         //Send packet to the player, that they have disconnect the lobby
