@@ -66,11 +66,14 @@ namespace ClientCLI
         {
             switch (package.Type) {
                 case PacketType.CreateLobby:
-                    await _connection.InvokeAsync($"{package.Type}", 10, 0, null);
+                    var createLobbyPacket = (CreateLobbyPacket)package;
+                    Console.WriteLine($"Host name: {createLobbyPacket.HostName}");
+                    PlayerProfile host = new(Color.Pink, createLobbyPacket.HostName);
+                    await _connection.InvokeAsync($"{package.Type}", 10, 0, host);
                     break;
                 case PacketType.JoinLobby:
-                    PlayerProfile playerProfile = new(Color.Red,"CossaiXFelix");
                     var joinLobbyPacket = (JoinLobbyPacket)package;
+                    PlayerProfile playerProfile = new(Color.Purple, joinLobbyPacket.PlayerName);
                     await _connection.InvokeAsync($"{package.Type}", joinLobbyPacket.LobbyId, playerProfile);
                     break;
                 case PacketType.ListAvailableLobbies:

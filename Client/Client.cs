@@ -34,6 +34,7 @@ public class Client : IClient
         {
             CurrentState |= ClientStates.IsConnected;
         }
+        _name = "";
     }
 
     public event Action<byte, string>? ReceivedUserMessage;
@@ -51,10 +52,21 @@ public class Client : IClient
     public event Action<byte, IPlayerProfile>? PlayerChangedProfile;
     public event Action<byte, IRole>? PlayerChangedRole;
     public event Action<byte, IRole>? RoleChangeRequested;
-
     public event Action<string>? ListingLobbies;
 
     public bool IsHost => (this.id == 1);
+    private string _name;
+    public string Name {
+        get => _name;
+        set
+        {
+            if (CurrentState.HasFlag(ClientStates.IsInLobby))
+            {
+                return;
+            } 
+            _name = value;
+        }
+    }
 
     public void SendMessage(string message)
     {
@@ -73,13 +85,12 @@ public class Client : IClient
 
     public void JoinLobby(byte lobbyId)
     {
-        SendPackage(new JoinLobbyPacket(lobbyId));
+        SendPackage(new JoinLobbyPacket(lobbyId, Name));
     }
 
     public void DisconnectLobby()
     {
         SendPackage(new DisconnectLobbyPacket());
-        CurrentState = CurrentState & ~ClientStates.IsInLobby;
     }
 
     public void IsReady()
@@ -104,20 +115,8 @@ public class Client : IClient
 
     public void CreateLobby()
     {
-        SendPackage(new CreateLobbyPacket());
-        /*
-        ReceivedPackage += (package) =>
-        {
-            if (package is AcceptedPacket)
-            {
-                Console.WriteLine("Lobby was succesfully created");
-            }
-            else
-            {
-                Console.WriteLine("Lobby creation faield");
-            }
-        };
-        */
+        Console.WriteLine($"Create lobby name: {Name}");
+        SendPackage(new CreateLobbyPacket(Name));
     }
 
     public void ChangeGameSettings(string settings)

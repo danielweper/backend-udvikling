@@ -18,8 +18,9 @@ public enum Command : ushort
     KickPlayer = 'k',
     StartGame = 's',
     ChangeGameSettings = 'g',
-    RequestPlayerUpdate = 'r',
-    RequestRoleChange = 'o',
+    RequestPlayerUpdate = 'u',
+    RequestRoleChange = 'r',
     SendMessage = 'm',
     SubmitTurn = 't',
+    ChangeName = 'b',
 }
