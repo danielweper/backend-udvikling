@@ -10,7 +10,6 @@ namespace ClientLogic;
 
 public class Client : IClient
 {
-    public string name { get; protected set; }
     public byte? lobbyId { get; protected set; }
     public ClientStates CurrentState { get; protected set; }
     public PacketTransport Transporter { get; init; }
@@ -32,7 +31,6 @@ public class Client : IClient
             // int maxPlayerCount,
             //     LobbyVisibility lobbyVisibility,
             // GameInfo? gameInfo)
-            
         };
         LeftLobby += delegate(string s) { CurrentState &= ~ClientStates.IsInLobby; };
         GameStarting += delegate(DateTime u) { CurrentState |= ClientStates.IsInGame; };
@@ -44,6 +42,7 @@ public class Client : IClient
         {
             CurrentState |= ClientStates.IsConnected;
         }
+
         _name = "";
     }
 
@@ -56,26 +55,28 @@ public class Client : IClient
     public event Action<string>? JoinedLobby;
     public event Action<string>? LeftLobby;
     public event Action<byte, IPlayerProfile>? PlayerJoined;
-    public event Action<byte>? PlayerLeft;
+    public event Action<string>? PlayerLeft;
     public event Action<DateTime>? GameStarting;
     public event Action<IGameSettings>? GameSettingsChanged;
     public event Action<byte, IPlayerProfile>? PlayerChangedProfile;
     public event Action<byte, IRole>? PlayerChangedRole;
     public event Action<byte, IRole>? RoleChangeRequested;
     public event Action<bool> PlayerStatusChanged;
-
     public event Action<string>? ListingLobbies;
 
-    public bool IsHost => (false);
+    public bool IsHost => (CurrentState.HasFlag(ClientStates.IsHost));
     private string _name;
-    public string Name {
+
+    public string Name
+    {
         get => _name;
         set
         {
             if (CurrentState.HasFlag(ClientStates.IsInLobby))
             {
                 return;
-            } 
+            }
+
             _name = value;
         }
     }
@@ -103,6 +104,7 @@ public class Client : IClient
     public void DisconnectLobby()
     {
         SendPackage(new DisconnectLobbyPacket(lobbyId.Value));
+        CurrentState &= ~ClientStates.IsInLobby;
     }
 
     public void IsReady()
@@ -142,15 +144,15 @@ public class Client : IClient
         SendPackage(new ChangeGameSettingsPacket(settings));
     }
 
-    public void KickPlayer(byte playerId, string reason)
+    public void KickPlayer(string kickPlayerName, string reason)
     {
-        if (!this.IsHost)
+        if (!IsHost)
         {
             // TODO: error message?
             return;
         }
 
-        SendPackage(new KickPlayerPacket(playerId, reason));
+        SendPackage(new KickPlayerPacket(kickPlayerName, reason, lobbyId.Value));
     }
 
     public void StartGame()
@@ -187,8 +189,12 @@ public class Client : IClient
                 SendPackage(new PingPacket());
                 break;
             case PacketType.InvalidRequest:
+            case PacketType.Denied:
+            {
                 BadRequest?.Invoke();
                 break;
+            }
+            
             case PacketType.LobbyCreated:
                 CurrentState |= ClientStates.IsInLobby | ClientStates.IsHost;
                 break;
@@ -206,13 +212,27 @@ public class Client : IClient
                 PlayerJoined?.Invoke(joinedId, joinedProfile);
                 break;
             case PacketType.PlayerLeftLobby:
-                byte leftId = ((PlayerLeftLobbyPacket)package).PlayerId;
-                PlayerLeft?.Invoke(leftId);
+                string displayName = ((PlayerLeftLobbyPacket)package).DisplayName;
+                if (displayName == Name)
+                {
+                    LeftLobby?.Invoke(displayName);
+                }
+                else
+                {
+                    PlayerLeft?.Invoke(displayName);
+                }
                 break;
             case PacketType.AvailableLobbies:
                 string lobbyInfos = ((AvailableLobbiesPacket)package).LobbyInfo;
                 ListingLobbies?.Invoke(lobbyInfos);
                 break;
+            case PacketType.KickPlayer:
+                string leavingPlayer = ((KickPlayerPacket)package).KickPlayerName;
+                LeftLobby?.Invoke(leavingPlayer);
+                break;
+            case PacketType.PlayerKicked:
+                LeftLobby?.Invoke("Placeholder");
+                    break;
             case PacketType.GameStarting:
                 var gameStartingPacket = (GameStartingPacket)package;
                 GameStarting?.Invoke(gameStartingPacket.Startingtime);

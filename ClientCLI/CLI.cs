@@ -1,3 +1,4 @@
+using System.Drawing;
 using ClientLogic;
 using Core.Packets;
 using Core.Packets.Shared;
@@ -6,43 +7,81 @@ namespace ClientCLI;
 
 class CLI
 {
-    private Client? client = null;
+    private string? name = null;
 
     public void Run()
     {
         CliTransporter transporter = new CliTransporter();
-        client = new Client(transporter);
+        Client client = new Client(transporter);
 
         transporter.PacketSent += (IPacket packet) =>
         {
-            PrintWithColor($"[OUTGOING] {packet}", ConsoleColor.DarkYellow);
+            var prevColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            Console.WriteLine($"[OUTGOING] {packet}");
+            Console.ForegroundColor = prevColor;
         };
         transporter.PacketReceived += (IPacket packet) =>
         {
-            PrintWithColor($"[INCOMING] {packet}", ConsoleColor.Yellow);
+            var prevColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"[INCOMING] {packet}");
             if (packet.Type == PacketType.InvalidRequest)
             {
-                PrintWithColor($"{((InvalidRequestPacket)packet).ErrorMessage}", ConsoleColor.Red);
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"{((InvalidRequestPacket)packet).ErrorMessage}");
             }
+
+            Console.ForegroundColor = prevColor;
         };
 
         client.ReceivedUserMessage += (string senderName, string content) =>
         {
-            PrintWithColor($"[{senderName}] {content}", ConsoleColor.Cyan);
+            var prevColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine($"[{senderName}] {content}");
+            Console.ForegroundColor = prevColor;
         };
 
-        client.JoinedLobby += (string info) => { PrintWithColor($"Joined Lobby! ({info})", ConsoleColor.Green); };
+        client.JoinedLobby += (string info) =>
+        {
+            var prevColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"Joined Lobby! ({info})");
+            Console.ForegroundColor = prevColor;
+        };
         client.ListingLobbies += (string info) =>
         {
-            PrintWithColor($"Listing available lobbies:", ConsoleColor.DarkYellow);
-            PrintWithColor(info, ConsoleColor.Green);
+            var prevColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            Console.WriteLine($"Listing available lobbies:");
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine(info);
+            Console.ForegroundColor = prevColor;
         };
 
-     
 
         client.Name = ChooseName(null)!;
         Console.WriteLine($"Name: {client.Name}");
 
+        client.PlayerLeft += (string leavingPlayer) =>
+        {
+            var prevColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine($"{leavingPlayer} has left the lobby");
+            Console.ForegroundColor = prevColor;
+        };
+
+        client.LeftLobby += (string leavingPlayer) =>
+        {
+            PrintWithColor("You have left the lobby ", ConsoleColor.DarkBlue);
+        };
+
+        client.BadRequest += () =>
+        {
+            PrintWithColor("Request denied", ConsoleColor.DarkRed);
+        };
+        
         while (true)
         {
             Console.WriteLine($"Current state: {client.CurrentState}");
@@ -69,6 +108,7 @@ class CLI
             if (chosenName == null && currentName != null)
                 break;
         }
+
         return (chosenName ?? currentName)!;
     }
 
@@ -129,6 +169,7 @@ class CLI
                 break;
             case Command.JoinLobby:
                 Console.WriteLine("Enter Lobby id");
+                // TODO: take user input
                 byte lobbyId = Convert.ToByte(Console.ReadLine());
                 client.JoinLobby(lobbyId);
                 break;
@@ -141,11 +182,11 @@ class CLI
                 client.DisconnectLobby();
                 break;
             case Command.IsReady:
-                Console.WriteLine("READY");
+                //Console.WriteLine("READY");
                 client.IsReady();
                 break;
             case Command.IsNotReady:
-                Console.WriteLine("Not Ready");
+                //Console.WriteLine("Not Ready");
                 client.IsNotReady();
                 break;
             case Command.ListAvailableLobbies:
@@ -156,15 +197,28 @@ class CLI
                 Console.WriteLine("Enter A Message");
 
                 var message = Console.ReadLine();
-                if (message != null)
-                {
-                    client.SendMessage(message);
-                }
-
+                if (message != null) client.SendMessage(message);
+                break;
+            case Command.StartGame:
+                client.StartGame();
                 break;
             case Command.ChangeName:
-                string newName  = ChooseName(this.client.Name);
-                this.client.Name = newName;
+                string newName = ChooseName(client.Name);
+                client.Name = newName;
+                name = Console.ReadLine() ?? name;
+                break;
+            case Command.KickPlayer:
+                Console.WriteLine("Which player do you wish to kick:");
+                var kickPlayer = Console.ReadLine();
+                if (kickPlayer == null)
+                {
+                    Console.WriteLine("Aborting...");
+                    break;
+                }
+
+                Console.WriteLine("Why do you wish to kick:");
+                var reason = Console.ReadLine();
+                client.KickPlayer(kickPlayer, reason ?? "No reason");
                 break;
             default:
                 Console.WriteLine($"Command '{command}' is not yet implemented");

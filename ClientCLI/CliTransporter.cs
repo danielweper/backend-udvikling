@@ -53,7 +53,12 @@ namespace ClientCLI
             _connection.On("PlayerJoinedLobby",
                 (byte playerId, string playerInfo) =>
                     ReceivePacket(new PlayerJoinedLobbyPacket(playerId, new PlayerProfile(Color.Pink, "Name"))));
-            //_connection.On("KickPlayer", (byte playerId,));
+            _connection.On("PlayerLeftLobby",
+                (string displayName) =>
+                    ReceivePacket(new PlayerLeftLobbyPacket(displayName)));
+            _connection.On("PlayerKicked",
+                () => 
+                    ReceivePacket(new PlayerKickedPacket()));
 
             //Game
             _connection.On("ToggleReadyToStart",
@@ -124,11 +129,20 @@ namespace ClientCLI
                     {
                         Console.WriteLine("I'm not ready");
                     }
+
                     break;
                 case PacketType.DisconnectLobby:
                     var disconnectLobbyPacket = (DisconnectLobbyPacket)package;
                     await _connection.InvokeAsync("LeaveLobby", disconnectLobbyPacket.LobbyId);
                     break;
+                case PacketType.KickPlayer:
+                    var kickPlayerPacket = (KickPlayerPacket)package;
+                    await _connection.InvokeAsync("KickPlayerFromLobby", kickPlayerPacket.KickPlayerName,
+                        kickPlayerPacket.Reason, kickPlayerPacket.LobbyId);
+                    break;
+                default:
+                    Console.WriteLine("Can't send packet that hasn't been implemented");
+                    return null;
             }
 
             await base.SendPacket(package);

@@ -1,8 +1,9 @@
 namespace Core.Packets.Client;
 
-public class KickPlayerPacket(byte playerId, string reason) : IPacket
+public class KickPlayerPacket(string kickPlayerName, string reason, byte lobbyId) : IPacket
 {
     public PacketType Type => PacketType.KickPlayer;
-    public readonly byte PlayerId = playerId;
+    public readonly string KickPlayerName = kickPlayerName;
     public readonly string Reason = reason;
+    public readonly byte LobbyId = lobbyId;
 }

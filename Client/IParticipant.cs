@@ -7,7 +7,7 @@ public interface IParticipant
     public event Action<string> JoinedLobby;
     public event Action<string> LeftLobby;
     public event Action<byte, IPlayerProfile> PlayerJoined;
-    public event Action<byte> PlayerLeft;
+    public event Action<string> PlayerLeft;
     public event Action<DateTime>? GameStarting;  // maybe DateTime instead of ulong
     public event Action<IGameSettings> GameSettingsChanged;
     public event Action<byte, IPlayerProfile> PlayerChangedProfile;

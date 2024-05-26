@@ -1,7 +1,7 @@
 namespace Core.Packets.Server;
 
-public class PlayerLeftLobbyPacket(byte playerId) : IPacket
+public class PlayerLeftLobbyPacket(string displayName) : IPacket
 {
     public PacketType Type => PacketType.PlayerLeftLobby;
-    public readonly byte PlayerId = playerId;
+    public readonly string DisplayName = displayName;
 }

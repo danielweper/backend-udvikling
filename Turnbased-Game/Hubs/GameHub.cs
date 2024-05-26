@@ -5,6 +5,7 @@ using ServerLogic;
 using ServerLogic.Model.Fighting;
 using Core.Model;
 using Core.Packets;
+using Core.Packets.Shared;
 using Turnbased_Game.Models;
 
 namespace Turnbased_Game.Hubs;
@@ -68,6 +69,7 @@ public class GameHub : Hub<IHubClient>
         {
             Console.WriteLine($"{playerProfile.Name} wants to create a lobby ({playerProfile.Color})");
         }
+
         playerProfile ??= DefaultPlayerProfile(Context.ConnectionId);
 
         // Create host
@@ -146,7 +148,7 @@ public class GameHub : Hub<IHubClient>
         return testName;
     }
 
-    public async Task KickPlayerFromLobby(byte playerIdToKick, string reason, byte lobbyId)
+    public async Task KickPlayerFromLobby(string displayNameToKick, string reason, byte lobbyId)
     {
         var lobby = Server.GetLobby(lobbyId);
 
@@ -157,24 +159,22 @@ public class GameHub : Hub<IHubClient>
             return;
         }
 
-        Player? player = lobby.Players.FirstOrDefault((Player p) => p.ParticipantId == playerIdToKick);
+        Player? player = lobby.Players.FirstOrDefault((Player p) => p.DisplayName.Equals(displayNameToKick));
 
-        if (player != null)
-        {
-            //Remove the player from the lobby
-            lobby.RemovePlayer(player);
 
-            await SendMessagePacket(
-                message: $"You have successfully kicked player {player.ParticipantId} from this lobby: {lobbyId}",
-                type: MessageType.Accepted, caller: Clients.Caller);
-            // await Clients.Group($"{lobbyId}")
-            //     .PlayerKicked(new KickPlayerPacket(playerId: player.ParticipantId, reason: reason));
-        }
-        else
+        if (player == null)
         {
-            await SendMessagePacket(caller: Clients.Caller, message: $"The player is not in this lobby: {lobbyId}",
-                type: MessageType.Denied);
+            await Clients.Caller.Denied((byte)PacketType.KickPlayer);
+            return;
         }
+
+        //Remove the player from the lobby
+        lobby.RemovePlayer(player);
+
+        var kickedConnection = ConnectionKnower.GetConnection(player);
+        await Clients.Client(kickedConnection).PlayerKicked();
+        await Groups.RemoveFromGroupAsync(kickedConnection, $"{lobbyId}");
+        await Clients.Group($"{lobbyId}").PlayerLeftLobby(player.DisplayName);
     }
 
     public async Task LeaveLobby(byte lobbyId)
@@ -213,7 +213,7 @@ public class GameHub : Hub<IHubClient>
         else
         {
             //Send packet that a player left
-            await Clients.Group($"{lobbyId}").PlayerLeftLobby(playerId.Value);
+            await Clients.Group($"{lobbyId}").PlayerLeftLobby(player.DisplayName);
         }
 
         //Send packet to the player, that they have disconnect the lobby
@@ -266,28 +266,28 @@ public class GameHub : Hub<IHubClient>
         Console.WriteLine("Listing available lobbies for someone");
     }
 
-    /*public async Task CreateGame(byte lobbyId, GameType gameType = DefaultGameType)
+/*public async Task CreateGame(byte lobbyId, GameType gameType = DefaultGameType)
+{
+    // Acknowledged
+    await SendMessagePacket("Received CreateGame request", MessageType.Acknowledged, Clients.Caller);
+
+    var lobby = Server.GetLobby(lobbyId);
+
+
+    if (lobby != null)
     {
-        // Acknowledged
-        await SendMessagePacket("Received CreateGame request", MessageType.Acknowledged, Clients.Caller);
+        lobby.CreateNewGame(gameType);
+        Game game = lobby?.Game;
+        // await Clients.Group($"{lobbyId}").GameCreated(new GameInfoPacket(game.GetInfo()));
+        await SendMessagePacket("Game created", MessageType.Accepted, Clients.Caller);
+    }
+    else
+    {
+        await SendMessagePacket("The lobby doesn't exist", MessageType.Denied, Clients.Caller);
+    }
+}*/
 
-        var lobby = Server.GetLobby(lobbyId);
-
-
-        if (lobby != null)
-        {
-            lobby.CreateNewGame(gameType);
-            Game game = lobby?.Game;
-            // await Clients.Group($"{lobbyId}").GameCreated(new GameInfoPacket(game.GetInfo()));
-            await SendMessagePacket("Game created", MessageType.Accepted, Clients.Caller);
-        }
-        else
-        {
-            await SendMessagePacket("The lobby doesn't exist", MessageType.Denied, Clients.Caller);
-        }
-    }*/
-
-    //Start the Game(battle/battles)
+//Start the Game(battle/battles)
     public async Task StartGame(byte lobbyId)
     {
         Console.WriteLine("Someone want to start the game");
