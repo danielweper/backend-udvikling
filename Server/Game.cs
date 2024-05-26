@@ -6,6 +6,7 @@ public class Game(GameType gameType)
 {
     public GameSettings Settings { get; set; } = new GameSettings(gameType);
     public List<Battle> Battles { get; set; } = new List<Battle>();
+    public bool BattlesHasStarted { get; set; } = false;
 
     public GameInfo GetInfo()
     {
@@ -20,7 +21,7 @@ public class Game(GameType gameType)
                 return battle;
             }
         }
+
         return null;
     }
-
 }

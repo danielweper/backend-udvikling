@@ -15,8 +15,6 @@ public interface IHubClient
     public Task ListAvailableLobbiesRequest(AvailableLobbiesPacket packet);
     public Task PlayerHasLeft(PlayerLeftLobbyPacket playerLeftLobbyPacket);
 
-    public Task ToggleReadyToStart(bool newStatus);
-
     public Task PlayerProfileUpdated(PlayerProfileChangedPacket profile);
     public Task PlayerRoleChanged(RoleChangedPacket packet);
     public Task ChangeGameSettings(GameSettingsChangedPacket packet); // JSON
@@ -43,13 +41,14 @@ public interface IHubClient
     public Task PlayerLeftLobby(byte playerId);
     // public Task AvailableLobbies(string() info);
     public Task AvailableLobbies(string lobbyInfos);
-    public Task GameStarting(ulong startTime);
+    public Task GameStarting(byte lobbyId, DateTime startTime);
     // public Task GameSettingsChanged();
     // public Task PlayerProfileChanged();
     public Task RoleChangeRequested(byte playerId, string requestedRole);
     public Task RoleChanged(byte playerId, string newRole);
     public Task ExecuteTurn(string turnInfo);
     public Task BattleIsOver(); // TODO: send the winner?
-    public Task UserMessage(byte senderId, string content);
+    public Task UserMessage(string senderName, string content);
     public Task SystemMessage(string content);
+    public Task ToggleReadyToStart(byte lobbyId, bool newStatus);
 }

@@ -10,8 +10,8 @@ namespace ClientLogic;
 
 public class Client : IClient
 {
-    public byte id { get; protected set; }
-    public byte lobbyId { get; protected set; }
+    public string name { get; protected set; }
+    public byte? lobbyId { get; protected set; }
     public ClientStates CurrentState { get; protected set; }
     public PacketTransport Transporter { get; init; }
     protected IPacket? lastPackage = null;
@@ -23,12 +23,22 @@ public class Client : IClient
         Transporter.OnConnected += delegate() { CurrentState |= ClientStates.IsConnected; };
         Transporter.OnDisconnected += delegate() { CurrentState &= ~ClientStates.IsConnected; };
 
-        JoinedLobby += delegate(string s) { CurrentState |= ClientStates.IsInLobby; };
+        JoinedLobby += delegate(string lobbyInfo)
+        {
+            CurrentState |= ClientStates.IsInLobby;
+            // byte id,
+            //     Player host,
+            // Player[] players,
+            // int maxPlayerCount,
+            //     LobbyVisibility lobbyVisibility,
+            // GameInfo? gameInfo)
+            
+        };
         LeftLobby += delegate(string s) { CurrentState &= ~ClientStates.IsInLobby; };
-        GameStarting += delegate(ulong u) { CurrentState |= ClientStates.IsInGame; };
+        GameStarting += delegate(DateTime u) { CurrentState |= ClientStates.IsInGame; };
 
         ReceivedUserMessage += ReceivedMessage;
-        ReceivedSystemMessage += (string content) => ReceivedMessage?.Invoke(0, content);
+        ReceivedSystemMessage += (string content) => ReceivedMessage?.Invoke("Server", content);
 
         if (Transporter.IsConnected)
         {
@@ -37,9 +47,9 @@ public class Client : IClient
         _name = "";
     }
 
-    public event Action<byte, string>? ReceivedUserMessage;
+    public event Action<string, string>? ReceivedUserMessage;
     public event Action<string>? ReceivedSystemMessage;
-    public event Action<byte, string>? ReceivedMessage;
+    public event Action<string, string>? ReceivedMessage;
     public event Action? BadRequest;
     public event Action<bool>? BattleIsOver;
     public event Action<string>? TurnIsOver;
@@ -47,11 +57,13 @@ public class Client : IClient
     public event Action<string>? LeftLobby;
     public event Action<byte, IPlayerProfile>? PlayerJoined;
     public event Action<byte>? PlayerLeft;
-    public event Action<ulong>? GameStarting;
+    public event Action<DateTime>? GameStarting;
     public event Action<IGameSettings>? GameSettingsChanged;
     public event Action<byte, IPlayerProfile>? PlayerChangedProfile;
     public event Action<byte, IRole>? PlayerChangedRole;
     public event Action<byte, IRole>? RoleChangeRequested;
+    public event Action<bool> PlayerStatusChanged;
+
     public event Action<string>? ListingLobbies;
 
     public bool IsHost => (this.id == 1);
@@ -70,7 +82,7 @@ public class Client : IClient
 
     public void SendMessage(string message)
     {
-        SendPackage(new SendMessagePacket(id, message));
+        SendPackage(new SendMessagePacket(message));
     }
 
     public void SubmitTurn(string turn)
@@ -83,7 +95,7 @@ public class Client : IClient
         SendPackage(new ListAvailableLobbiesPacket());
     }
 
-    public void JoinLobby(byte lobbyId)
+    public void JoinLobby(byte lobbyId, string? name)
     {
         SendPackage(new JoinLobbyPacket(lobbyId, Name));
     }
@@ -95,12 +107,12 @@ public class Client : IClient
 
     public void IsReady()
     {
-        SendPackage(new ToggleReadyToStartPacket(true));
+        SendPackage(new ToggleReadyToStartPacket(lobbyId.Value, true));
     }
 
     public void IsNotReady()
     {
-        SendPackage(new ToggleReadyToStartPacket(false));
+        SendPackage(new ToggleReadyToStartPacket(lobbyId.Value, false));
     }
 
     public void RequestProfileUpdate(IPlayerProfile profile)
@@ -143,14 +155,12 @@ public class Client : IClient
 
     public void StartGame()
     {
-        if (!this.IsHost)
+        /*if (!this.IsHost)
         {
             // TODO: error message?
             return;
-        }
-
-        SendPackage(new StartGamePacket());
-        // TODO: act on the answer as well
+        }*/
+        SendPackage(new StartGamePacket(lobbyId.Value, DateTime.Now));
     }
 
     public void Accepted(int requestId)
@@ -184,6 +194,7 @@ public class Client : IClient
                 break;
             case PacketType.LobbyInfo:
                 string lobbyInfo = ((LobbyInfoPacket)package).Info;
+                Console.WriteLine($"Lobbi info: {lobbyInfo}");
                 JoinedLobby?.Invoke(lobbyInfo);
                 var reader = new StringReader(lobbyInfo);
                 lobbyId = byte.Parse(await reader.ReadLineAsync() ?? string.Empty);
@@ -193,8 +204,6 @@ public class Client : IClient
                 byte joinedId = ((PlayerJoinedLobbyPacket)package).PlayerId;
                 IPlayerProfile joinedProfile = ((PlayerJoinedLobbyPacket)package).Profile;
                 PlayerJoined?.Invoke(joinedId, joinedProfile);
-                id = joinedId;
-                Console.WriteLine($"PlayerId: {joinedId} \n");
                 break;
             case PacketType.PlayerLeftLobby:
                 byte leftId = ((PlayerLeftLobbyPacket)package).PlayerId;
@@ -205,7 +214,8 @@ public class Client : IClient
                 ListingLobbies?.Invoke(lobbyInfos);
                 break;
             case PacketType.GameStarting:
-                GameStarting?.Invoke(0);
+                var gameStartingPacket = (GameStartingPacket)package;
+                GameStarting?.Invoke(gameStartingPacket.Startingtime);
                 break;
             case PacketType.GameSettingsChanged:
                 IGameSettings newSettings = ((GameSettingsChangedPacket)package).NewSettings;
@@ -234,9 +244,9 @@ public class Client : IClient
                 BattleIsOver?.Invoke(true);
                 break;
             case PacketType.UserMessage:
-                byte senderId = ((UserMessagePacket)package).SenderId;
+                string senderName = ((UserMessagePacket)package).SenderName;
                 string userContent = ((UserMessagePacket)package).Content;
-                ReceivedUserMessage?.Invoke(senderId, userContent);
+                ReceivedUserMessage?.Invoke(senderName, userContent);
                 break;
             case PacketType.SystemMessage:
                 string systemContent = ((SystemMessagePacket)package).Content;
@@ -244,7 +254,9 @@ public class Client : IClient
                 break;
             case PacketType.RegisterPlayerTurn:
                 break;
-            case PacketType.PlayerReadyStatus:
+            case PacketType.ToggleReadyToStart:
+                var isReady = ((ToggleReadyPacket)package).NewStatus;
+                PlayerStatusChanged?.Invoke(isReady);
                 break;
             case PacketType.PlayerProfileCreated:
                 break;

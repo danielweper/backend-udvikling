@@ -5,10 +5,10 @@ namespace ClientLogic;
 
 public interface IClient : /*IChatter,*/ IFighter, IHost
 {
-    byte id { get; }
+    // byte? playerId { get; }
     // some state for lobby
     // some state for players in lobby
-    byte lobbyId { get; }
+    byte? lobbyId { get; }
     ClientStates CurrentState { get; }
     PacketTransport Transporter { get; }
 

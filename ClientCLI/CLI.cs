@@ -25,7 +25,7 @@ class CLI
             }
         };
 
-        client.ReceivedUserMessage += (byte senderId, string content) =>
+        client.ReceivedUserMessage += (string senderName, string content) =>
         {
             PrintWithColor($"[{senderId}] {content}", ConsoleColor.Cyan);
         };
@@ -95,7 +95,7 @@ class CLI
             }
             else
             {
-                acceptableCommands.Add(Command.DisplayLobbies);
+                acceptableCommands.Add(Command.ListAvailableLobbies);
                 acceptableCommands.Add(Command.JoinLobby);
                 acceptableCommands.Add(Command.CreateLobby);
                 acceptableCommands.Add(Command.ChangeName);
