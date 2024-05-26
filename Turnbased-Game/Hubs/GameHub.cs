@@ -60,7 +60,14 @@ public class GameHub : Hub<IHubClient>
     public async Task CreateLobby(int maxPlayerCount, LobbyVisibility lobbyVisibility,
         PlayerProfile? playerProfile = null)
     {
-        Console.WriteLine("Someone wants to create a lobby");
+        if (playerProfile == null)
+        {
+            Console.WriteLine("Someone wants to create a lobby");
+        }
+        else
+        {
+            Console.WriteLine($"{playerProfile.Name} wants to create a lobby ({playerProfile.Color})");
+        }
         playerProfile ??= DefaultPlayerProfile(Context.ConnectionId);
 
         // Create host
