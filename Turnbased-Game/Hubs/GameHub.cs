@@ -25,6 +25,7 @@ public class GameHub : Hub<IHubClient>
 
     public override Task OnDisconnectedAsync(Exception? exception)
     {
+        _ = LeaveLobby(ConnectionKnower.GetLobby(Context.ConnectionId)!.Id);
         ConnectionKnower.RemoveConnection(Context.ConnectionId);
         return base.OnDisconnectedAsync(exception);
     }
