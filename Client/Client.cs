@@ -57,7 +57,7 @@ public class Client : IClient
         GameStarting += delegate(DateTime u) { CurrentState |= (ClientStates.IsInGame | ClientStates.IsFighter); };
         BattleIsOver += delegate (bool b) { CurrentState &= ~(ClientStates.IsInGame | ClientStates.IsFighter); };
 
-        ReceivedUserMessage += ReceivedMessage;
+        ReceivedUserMessage += (string sender, string content) => ReceivedMessage?.Invoke(sender, content);
         ReceivedSystemMessage += (string content) => ReceivedMessage?.Invoke("Server", content);
 
         if (Transporter.IsConnected)

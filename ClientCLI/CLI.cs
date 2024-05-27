@@ -21,7 +21,7 @@ class CLI
         };
         transporter.PacketReceived += (IPacket packet) =>
         {
-            //PrintWithColor($"[INCOMING] {packet}", ConsoleColor.Yellow);
+            PrintWithColor($"[INCOMING] {packet}", ConsoleColor.Yellow);
             if (packet.Type == PacketType.InvalidRequest)
             {
                 //PrintWithColor($"{((InvalidRequestPacket)packet).ErrorMessage}", ConsoleColor.Red);
