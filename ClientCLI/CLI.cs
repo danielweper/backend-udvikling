@@ -1,3 +1,4 @@
+using System.Data.SqlTypes;
 using System.Drawing;
 using ClientLogic;
 using Core.Packets;
@@ -16,18 +17,18 @@ class CLI
 
         transporter.PacketSent += (IPacket packet) =>
         {
-            PrintWithColor($"[OUTGOING] {packet}", ConsoleColor.DarkYellow);
+            //PrintWithColor($"[OUTGOING] {packet}", ConsoleColor.DarkYellow);
         };
         transporter.PacketReceived += (IPacket packet) =>
         {
-            PrintWithColor($"[INCOMING] {packet}", ConsoleColor.Yellow);
+            //PrintWithColor($"[INCOMING] {packet}", ConsoleColor.Yellow);
             if (packet.Type == PacketType.InvalidRequest)
             {
-                PrintWithColor($"{((InvalidRequestPacket)packet).ErrorMessage}", ConsoleColor.Red);
+                //PrintWithColor($"{((InvalidRequestPacket)packet).ErrorMessage}", ConsoleColor.Red);
             }
         };
 
-        client.ReceivedUserMessage += (string senderName, string content) =>
+        client.ReceivedMessage += (string senderName, string content) =>
         {
             PrintWithColor($"[{senderName}] {content}", ConsoleColor.Cyan);
         };
@@ -51,9 +52,23 @@ class CLI
             PrintWithColor("You have left the lobby ", ConsoleColor.DarkBlue);
         };
 
+        client.GameStarting += (DateTime startingTime) =>
+        {
+            PrintWithColor("Game is starting now");
+        };
+
         client.BadRequest += () =>
         {
             PrintWithColor("Request denied", ConsoleColor.DarkRed);
+        };
+
+        client.TurnIsOver += (string turn) =>
+        {
+            PrintWithColor("A turn has been executed, ready for next action", ConsoleColor.Green);
+        };
+        client.BattleIsOver += (bool b) =>
+        {
+            PrintWithColor("The battle is over", ConsoleColor.DarkGreen);
         };
 
         client.Name = ChooseName(null)!;
@@ -193,6 +208,26 @@ class CLI
                 var reason = Console.ReadLine();
                 client.KickPlayer(kickPlayer, reason ?? "No reason");
                 break;
+            case Command.SubmitTurn:
+                char turn = ' ';
+                while (true)
+                {
+                    Console.WriteLine("Press 'A' to attack, 'D' to defend and 'H' to heal");
+                    turn = char.ToUpper(Console.ReadKey().KeyChar);
+                    switch (turn)
+                    {
+                        case 'A':
+                        case 'D':
+                        case 'H':
+                        case 'F':
+                            break;
+                        default:
+                            continue;
+                    }
+                    break;
+                }
+                client.SubmitTurn(turn);
+                break;
             default:
                 Console.WriteLine($"Command '{command}' is not yet implemented");
                 break;
@@ -204,6 +239,6 @@ class CLI
         var prevColor = Console.ForegroundColor;
         Console.ForegroundColor = color ?? prevColor;
         Console.WriteLine(output);
-        Console.ForegroundColor = prevColor;
+        Console.ForegroundColor = ConsoleColor.Gray;
     }
 }

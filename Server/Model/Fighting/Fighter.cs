@@ -4,7 +4,7 @@ public class Fighter(Player player)
 {
     public readonly byte PlayerId = player.ParticipantId;
     public int Health { get; private set; } = 100;
-    public int Attack { get; private set; } = 10;
+    public int Attack { get; private set; } = 25;
     public int Defense { get; private set; } = 0;
     public FightTurn Turn { get; private set; }
 

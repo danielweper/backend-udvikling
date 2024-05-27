@@ -12,6 +12,14 @@ public class Game(GameType gameType)
     {
         return new GameInfo(this);
     }
+
+    public void CreateBattle(byte battleId, Player player1, Player player2)
+    {
+        Battles.Add(new Battle(battleId, player1, player2));
+        Console.WriteLine("Added a battle");
+        Console.WriteLine($"Battle count: {Battles.Count}");
+    }
+
     public Battle? GetBattle(byte requestId)
     {
         foreach (var battle in Battles)

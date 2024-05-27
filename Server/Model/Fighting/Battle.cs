@@ -6,6 +6,7 @@ public class Battle
 {
     public readonly byte BattleId;
     public Fighter[] Fighters { get; } = new Fighter[2];
+    private bool isOver = false;
     private bool[] isReady = new bool[2];
 
     public Battle(byte battleId, Player player1, Player player2)
@@ -16,11 +17,23 @@ public class Battle
         isReady[0] = false;
         isReady[1] = false;
 
-        Fighters[0].OnDie += () => OnDone?.Invoke(player2);
-        Fighters[1].OnDie += () => OnDone?.Invoke(player1);
+        OnDone += (Player p) => { isOver = true; };
+        Fighters[0].OnDie += () =>
+        {
+            if (!isOver)
+                OnDone?.Invoke(player2);
+        };
+        Fighters[1].OnDie += () => {
+            if (!isOver)
+                OnDone?.Invoke(player1);
+        };
+
+        OnReady += ExecuteRound;
     }
 
-    public event Action<Player> OnDone;
+    public event Action<Player>? OnDone;
+    public event Action? OnReady;
+    public event Action? OnExecutedRound;
 
     public void ExecuteRound()
     {
@@ -54,6 +67,7 @@ public class Battle
 
             isReady[fighterIndex] = false;
         }
+        OnExecutedRound?.Invoke();
     }
 
     public void UpdatePlayerTurn(Player player, FightTurn turn)
@@ -63,6 +77,11 @@ public class Battle
         Fighter fighter = Fighters[fighterIndex];
         fighter.DoTurn(turn);
         isReady[fighterIndex] = true;
+
+        if (isReady.All(it => it == true))
+        {
+            OnReady?.Invoke();
+        }
     }
 
     public void PlayerForfeits(Player forfeiter)

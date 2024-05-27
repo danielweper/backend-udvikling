@@ -7,6 +7,7 @@ using Core.Model;
 using Core.Packets;
 using Core.Packets.Shared;
 using Turnbased_Game.Models;
+using Xunit;
 
 namespace Turnbased_Game.Hubs;
 
@@ -25,7 +26,11 @@ public class GameHub : Hub<IHubClient>
 
     public override Task OnDisconnectedAsync(Exception? exception)
     {
-        _ = LeaveLobby(ConnectionKnower.GetLobby(Context.ConnectionId)!.Id);
+        if (ConnectionKnower.IsPlayer(Context.ConnectionId))
+        {
+            Console.WriteLine("A player disconnected unexpectedly");
+            _ = LeaveLobby(ConnectionKnower.GetLobby(Context.ConnectionId)!.Id);
+        }
         ConnectionKnower.RemoveConnection(Context.ConnectionId);
         return base.OnDisconnectedAsync(exception);
     }
@@ -75,6 +80,7 @@ public class GameHub : Hub<IHubClient>
 
         // Create host
         var host = new Player(playerProfile.Name, 1, playerProfile);
+        host.Role = PlayerRole.Fighter;
 
         // Create lobby
         byte lobbyId = GenerateLobbyId();
@@ -120,6 +126,7 @@ public class GameHub : Hub<IHubClient>
         HashSet<string> playerNames = lobby.Players.Select(pl => pl.DisplayName).ToHashSet();
         string displayName = GetDisplayName(playerProfile.Name, playerNames);
         Player player = new(displayName, 1, playerProfile);
+        player.Role = PlayerRole.Fighter;
 
         lobby.AddPlayer(player);
         Console.WriteLine($"{player.DisplayName} joined the lobby");
@@ -292,10 +299,17 @@ public class GameHub : Hub<IHubClient>
         Console.WriteLine("Someone want to start the game");
         var lobby = Server.GetLobby(lobbyId);
 
+        if (lobby is null)
+        {
+            Console.WriteLine("Trying to start a game, in a lobby that doesn't exist");
+            return;
+        }
+
         var allPlayersReady = lobby != null && lobby.Players.All(p => p.ReadyStatus);
         if (!allPlayersReady)
         {
             Console.WriteLine("All Players are not ready");
+            await Clients.Caller.Denied((byte)PacketType.StartGame);
             return;
         }
 
@@ -304,8 +318,8 @@ public class GameHub : Hub<IHubClient>
         var fighters = lobby?.Players.Where(p => p.Role == PlayerRole.Fighter).ToList();
 
         //Check of a lobby has a game
-        var game = lobby?.Game;
-        if (fighters == null || game == null)
+        lobby.CreateNewGame(GameType.RoundRobin);
+        if (fighters == null)
         {
             Console.WriteLine("The game or fighters do not exist");
             return;
@@ -315,6 +329,7 @@ public class GameHub : Hub<IHubClient>
         if (fighters.Count % 2 != 0)
         {
             Console.WriteLine("Game cannot start, need even number of Fighters");
+            Clients.Caller.Denied((byte) PacketType.StartGame);
             return;
         }
 
@@ -324,11 +339,22 @@ public class GameHub : Hub<IHubClient>
         for (var i = 0; i < fighters.Count; i += 2)
         {
             //Create battle
-            var battle = new Battle(GenerateBattleId(game), fighters[i], fighters[i + 1]);
-
-            //Add battle to game
-            game.Battles.Add(battle);
+            lobby.Game.CreateBattle(1, fighters[i], fighters[i + 1]);
         }
+
+        Console.WriteLine($"Battle count: {lobby.Game.Battles.Count}");
+        lobby.Game.GetBattle(1).OnDone += async (Player winner) =>
+        {
+            Console.WriteLine("Battle is over");
+            var winnerConnection = ConnectionKnower.GetConnection(winner);
+            await Clients.Group($"{lobbyId}").BattleIsOver();
+            await Clients.Client(winnerConnection).SystemMessage("You have won the battle");
+        };
+        lobby.Game.GetBattle(1).OnExecutedRound += async () =>
+        {
+            Console.WriteLine("Battle executed a round");
+            await Clients.Group($"{lobbyId}").ExecuteTurn("");
+        };
 
         //Send packet to client
         await Clients.Group($"{lobbyId}").GameStarting(lobbyId, DateTime.Now);
@@ -343,92 +369,46 @@ public class GameHub : Hub<IHubClient>
         return true;
     }
 
-    private async Task<bool> NoPlayerFound(Player? player)
+    public async Task RegisterPlayerTurn(char playerTurn)
     {
-        if (player != null) return false;
-        await SendMessagePacket("The player doesn't exist in the lobby", MessageType.Denied, Clients.Caller);
-        return true;
-    }
+        Player player = ConnectionKnower.GetPlayer(Context.ConnectionId)!;
+        byte playerId = player.ParticipantId;
+        var game = ConnectionKnower.GetLobby(Context.ConnectionId)?.Game;
 
-    private async Task<bool> NoGameFound(Game? game)
-    {
-        if (game != null) return false;
-        await SendMessagePacket("The lobby doesn't have an existing game", MessageType.Denied,
-            Clients.Caller);
-        return true;
-    }
-
-    public async Task LeaveBattle(byte lobbyId, byte battleId)
-    {
-        // Acknowledged
-        await SendMessagePacket("Received leave Game request", MessageType.Acknowledged, Clients.Caller);
-
-        var lobby = Server.GetLobby(lobbyId);
-        var participantId = ConnectionKnower.GetPlayer(Context.ConnectionId)?.ParticipantId;
-
-        if (lobby == null || participantId == null)
-        {
-            // TODO send message
-            return;
-        }
-
-        var player = lobby.Players.FirstOrDefault((Player p) => p.ParticipantId == participantId);
-        if (player == null)
-        {
-            // TODO send message
-            return;
-        }
-
-        var game = lobby?.Game;
+        //Check of a lobby has a game
         if (game == null)
         {
-            // TODO send message
             return;
         }
 
-        var battle = game.GetBattle(battleId);
-        if (battle == null)
+        //Get the battle player is in
+        var battle = game.GetBattle(1);
+        FightAction action;
+        switch (playerTurn)
         {
-            // TODO send message
-            return;
+            case 'A':
+                action = FightAction.Attack;
+                break;
+            case 'D':
+                action = FightAction.Defense;
+                break;
+            case 'H':
+                action = FightAction.Heal;
+                break;
+            case 'F':
+                action = FightAction.Forfeit;
+                break;
+            default:
+                action = FightAction.Attack;
+                break;
         }
 
-        battle.PlayerForfeits(player);
-        await SendMessagePacket("You have successfully left the battle", MessageType.Accepted, Clients.Caller);
-
-        if (battle.Fighters.Select(fighter => fighter.PlayerId).Contains(participantId.Value))
+        // var player = battle?.Fighters.Find(p => p.ParticipantId == playerId);
+        var fighter = battle?.Fighters.FirstOrDefault(fighter => fighter.PlayerId == playerId);
+        if (battle != null && fighter != null)
         {
-        }
-        else
-        {
-            await SendMessagePacket("Player wasn't found in requested battle", MessageType.Denied, Clients.Caller);
-        }
-    }
-
-    public async Task RegisterPlayerTurn(byte lobbyId, byte playerId, byte battleId, string playerTurn)
-    {
-        // Acknowledged
-        await SendMessagePacket("Received Start Game request", MessageType.Acknowledged, Clients.Caller);
-        var lobby = Server.GetLobby(lobbyId);
-        var game = lobby?.Game;
-        //Check of a lobby has a game
-        if (game != null)
-        {
-            //Get the battle player is in
-            var battle = game.GetBattle(battleId);
-
-            // var player = battle?.Fighters.Find(p => p.ParticipantId == playerId);
-            var player = battle?.Fighters.FirstOrDefault(fighter => fighter.PlayerId == playerId);
-            if (battle != null && player != null)
-            {
-                //Register players turn
-                await SendMessagePacket("Your turn is executed", MessageType.Accepted, Clients.Caller);
-            }
-        }
-        else
-        {
-            await SendMessagePacket("The lobby doesn't exist or the lobby doesn't have a game", MessageType.Denied,
-                Clients.Caller);
+            await Clients.Caller.Accepted((byte)PacketType.SubmitTurn);
+            battle.UpdatePlayerTurn(player, new FightTurn(action));
         }
     }
 

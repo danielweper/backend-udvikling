@@ -1,8 +1,8 @@
 namespace Core.Packets.Client;
 
-public class SubmitTurnPacket(string turnInfo) : IPacket
+public class SubmitTurnPacket(char turnInfo) : IPacket
 {
     public PacketType Type => PacketType.SubmitTurn;
 
-    public readonly string TurnInfo = turnInfo;
+    public readonly char TurnInfo = turnInfo;
 }

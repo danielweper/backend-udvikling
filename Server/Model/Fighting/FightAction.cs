@@ -3,5 +3,7 @@
 public enum FightAction
 {
     Attack,
-    Defense
+    Defense,
+    Heal,
+    Forfeit,
 }

@@ -59,14 +59,18 @@ namespace ClientCLI
             //Message  
             _connection.On("UserMessage",
                 (string sender, string content) => ReceivePacket(new UserMessagePacket(sender, content)));
+            _connection.On("SystemMessage",
+                (string content) => ReceivePacket(new SystemMessagePacket(content)));
 
             //Game
             _connection.On("ToggleReadyToStart",
                 (byte lobbyId, byte playerId, bool status) =>
                     ReceivePacket(new ToggleReadyPacket(lobbyId, playerId, status)));
             _connection.On("GameStarting",
-                (byte lobbyId, DateTime time) => ReceivePacket(new StartGamePacket(lobbyId, time)));
+                (byte lobbyId, DateTime time) => ReceivePacket(new GameStartingPacket(time)));
             //Battle
+            _connection.On("ExecuteTurn", (string s) => ReceivePacket(new ExecuteTurnPacket()));
+            _connection.On("BattleIsOver", () => ReceivePacket(new BattleOverPacket()));
 
             StartConnectionAsync().Wait();
 
@@ -114,7 +118,6 @@ namespace ClientCLI
                 case PacketType.StartGame:
                     var gameStartingPacket = (StartGamePacket)package;
                     await _connection.InvokeAsync("StartGame", gameStartingPacket.LobbyId);
-                    Console.WriteLine($"Game created at: {gameStartingPacket.Time}");
                     break;
                 case PacketType.ToggleReadyToStart:
                     var toggleReadyToStart = ((ToggleReadyToStartPacket)package);
@@ -137,6 +140,10 @@ namespace ClientCLI
                     var kickPlayerPacket = (KickPlayerPacket)package;
                     await _connection.InvokeAsync("KickPlayerFromLobby", kickPlayerPacket.KickPlayerName,
                         kickPlayerPacket.Reason, kickPlayerPacket.LobbyId);
+                    break;
+                case PacketType.SubmitTurn:
+                    var submitTurnPacket = (SubmitTurnPacket)package;
+                    await _connection.InvokeAsync("RegisterPlayerTurn", submitTurnPacket.TurnInfo);
                     break;
                 default:
                     Console.WriteLine("Can't send packet that hasn't been implemented");

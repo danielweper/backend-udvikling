@@ -54,7 +54,8 @@ public class Client : IClient
             CurrentState &= ClientStates.IsConnected;
             players.Clear();
         };
-        GameStarting += delegate(DateTime u) { CurrentState |= ClientStates.IsInGame; };
+        GameStarting += delegate(DateTime u) { CurrentState |= (ClientStates.IsInGame | ClientStates.IsFighter); };
+        BattleIsOver += delegate (bool b) { CurrentState &= ~(ClientStates.IsInGame | ClientStates.IsFighter); };
 
         ReceivedUserMessage += ReceivedMessage;
         ReceivedSystemMessage += (string content) => ReceivedMessage?.Invoke("Server", content);
@@ -108,7 +109,7 @@ public class Client : IClient
         SendPackage(new SendMessagePacket(message));
     }
 
-    public void SubmitTurn(string turn)
+    public void SubmitTurn(char turn)
     {
         SendPackage(new SubmitTurnPacket(turn));
     }
@@ -304,8 +305,10 @@ public class Client : IClient
             case PacketType.PlayerProfileCreated:
                 break;
             case PacketType.Acknowledged:
+            case PacketType.Accepted:
+                break;
             default:
-                // ignore
+                Console.WriteLine($"Received {package.Type}, but not yet implemented in Client");
                 break;
         }
     }
@@ -316,9 +319,8 @@ public class Client : IClient
         byte lobbyId = byte.Parse(reader.ReadLine()!);
         string host = reader.ReadLine()!.Trim();
         string[] players = reader.ReadLine()!.Trim().Split(", ");
-        int maxPlayers = int.Parse(reader.ReadLine()!);
-        LobbyVisibility visibility = (LobbyVisibility)int.Parse(reader.ReadLine()!);
+        int maxPlayers = int.Parse(reader.ReadLine().Split(": ")[1].Trim()!);
 
-        return (lobbyId, host, players, maxPlayers, visibility);
+        return (lobbyId, host, players, maxPlayers, LobbyVisibility.Public);
     }
 }
